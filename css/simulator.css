@@ -453,8 +453,8 @@ table.rtable tr.avg-row td {
 .state-node {
   display: inline-block;
   padding: 8px 14px;
-  border: 1px solid var(--green-dim);
-  color: var(--green-dim);
+  border: 1px solid var(--green-dk);
+  color: var(--green-dk);
   font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -463,9 +463,38 @@ table.rtable tr.avg-row td {
 }
 
 .state-node.active {
+  color: #000;
+  font-weight: bold;
+}
+
+.state-node[data-state="new"].active {
+  background: #4db8ff;
+  border-color: #4db8ff;
+  box-shadow: 0 0 8px #4db8ff99, 0 0 18px #4db8ff44;
+}
+
+.state-node[data-state="ready"].active {
+  background: var(--amber);
+  border-color: var(--amber);
+  box-shadow: 0 0 8px #ffb70099, 0 0 18px #ffb70044;
+}
+
+.state-node[data-state="running"].active {
+  background: var(--green);
   border-color: var(--green);
-  color: var(--green);
-  box-shadow: var(--glow-sm);
+  box-shadow: 0 0 8px #00ff4199, 0 0 18px #00ff4144;
+}
+
+.state-node[data-state="blocked"].active {
+  background: var(--red);
+  border-color: var(--red);
+  box-shadow: 0 0 8px #ff313199, 0 0 18px #ff313144;
+}
+
+.state-node[data-state="terminated"].active {
+  background: #cc55ff;
+  border-color: #cc55ff;
+  box-shadow: 0 0 8px #cc55ff99, 0 0 18px #cc55ff44;
 }
 
 .state-arrow {

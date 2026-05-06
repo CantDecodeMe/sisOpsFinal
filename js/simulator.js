@@ -57,7 +57,7 @@
   }
 
   function getSpeed() {
-    return parseInt(document.getElementById('speed-select').value) || 2;
+    return parseFloat(document.getElementById('speed-select').value) || 2;
   }
 
   function wireQuantumVisibility() {
