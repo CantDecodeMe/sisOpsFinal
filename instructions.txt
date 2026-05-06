@@ -1,0 +1,84 @@
+Instructions
+Es fundamental que presten atención a la validación del desarrollo de su proyecto final, ya que no basta con una simulación visual o lógica de los algoritmos y procesos. El sistema simulador debe implementar de manera explícita el uso de threads, así como considerar y evidenciar el uso de paralelismo, multithreading, concurrencia y la simulación de múltiples cores de CPU. Esto implica que los procesos no solo se representen gráficamente, sino que también permita visualizar threads de forma concurrente dentro del simulador, distribuyéndose entre cores y reflejando el comportamiento real de un sistema operativo moderno. La correcta implementación de estos elementos será un criterio clave para la evaluación del proyecto.
+
+· Uso de multiprocesamiento mediante fork
+· Uso de multithreading (threads)
+· Ejecución en paralelismo real o simulado
+· Simulación explícita de múltiples cores de CPU
+
+debe ejecutarse utilizando threads y/o forks, no únicamente simulación lógica de procesos.
+
+Cada proceso del simulador debe:
+
+· Ejecutarse como thread o fork
+· Poder ejecutarse en paralelo
+· Poder asignarse a un core o varios cores dependiendo de los INPUT
+
+REPORTE TÉCNICO
+
+El reporte debe incluir obligatoriamente:
+
+Introducción
+Objetivo del sistema
+Marco teórico:
+Procesos
+Threads
+Fork
+Scheduling
+Memoria
+Arquitectura del sistema
+Diseño concurrente
+Simulación de cores
+Implementación de algoritmos
+Manejo de concurrencia
+Resultados experimentales
+Escenarios de prueba
+Análisis comparativo
+Conclusiones
+Trabajo futuro
+
+ESCENARIOS DE SIMULACIÓN
+
+El sistema debe permitir simular:
+
+Ejecución con 1 core vs múltiples cores
+Alta carga de procesos
+Diferentes tamaños de memoria
+Comparación entre algoritmos
+Escenarios con alta concurrencia
+
+
+CÓDIGO DE HONOR UDEM 
+
+Además el alumno declara que:
+
+· El trabajo es completamente original
+· No se utilizó código de otros equipos
+· Todas las fuentes están citadas
+· No se incurrió en plagio
+
+Cualquier evidencia de copia implica anulación del proyecto.
+
+
+
+REFERENCIAS (FORMATO APA)
+
+Algunos ejemplos:
+
+· Silberschatz, A., Galvin, P., & Gagne, G. (2018). Operating System Concepts. Wiley.
+· Tanenbaum, A. (2015). Modern Operating Systems. Pearson.
+· Stallings, W. (2018). Operating Systems: Internals and Design Principles.
+
+
+
+ENTREGABLES EN BLACKBOARD Y EN UBIQUITOUS INDIVIDUALES
+
+Requierimientos de la sección Proyecto Final disponible en Blackboard
+Requerimientos complementarios de esta sección.
+Proyecto compactado en formato .zip y publicado en el host ubiquitous.udem.edu
+Video demostrativo colgado en youtube con la participación de todos los integrantes del equipo
+Co-evaluación en un archivo de .txt
+
+
+NOTA:  Los equipos deberán entregar una coevaluación en la que se incluya el nombre completo de todos los integrantes del equipo y la calificación asignada a cada miembro con base en su participación y contribución al desarrollo del proyecto final. Es importante señalar que esta evaluación es exclusivamente entre compañeros, por lo que no debe incluirse autoevaluación bajo ninguna circunstancia. La coevaluación debe reflejar de manera objetiva y justa el desempeño de cada integrante.
+

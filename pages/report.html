@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCHED_SIM // REPORTE TÉCNICO</title>
+<link rel="stylesheet" href="../css/theme.css">
+<link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="../css/report.css">
+</head>
+<body>
+
+<div id="tooltip"></div>
+
+<div class="crt-wrapper">
+<div class="shell">
+
+  <!-- TITLE BAR -->
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <div class="titlebar-dots"><span></span><span></span><span></span></div>
+      <a href="../index.html" style="color:inherit;text-decoration:none">SCHED_SIM</a> &nbsp;/&nbsp; REPORTE TÉCNICO
+    </div>
+    <div class="titlebar-right">
+      <button class="theme-toggle" id="theme-toggle-btn" type="button">[ ◐ LIGHT ]</button>
+      <span id="clock">--:--:--</span>
+    </div>
+  </div>
+
+  <!-- BOOT HEADER -->
+  <div class="boot-header">
+    <div class="boot-line">> SCHED_SIM // REPORTE TÉCNICO — UDEM</div>
+    <div class="boot-title">REPORTE<span class="prompt-blink"></span></div>
+    <div class="boot-sub">DOCUMENTACIÓN ACADÉMICA · SISTEMAS OPERATIVOS</div>
+  </div>
+
+  <!-- LAYOUT: SIDEBAR + CONTENT -->
+  <div class="report-layout">
+    <aside class="report-sidebar">
+      <div class="sidebar-header">SECCIONES</div>
+      <a class="sidebar-link active" data-section="intro">Introducción</a>
+      <a class="sidebar-link" data-section="objetivo">Objetivo</a>
+      <a class="sidebar-link" data-section="marco">Marco teórico</a>
+      <a class="sidebar-link" data-section="arquitectura">Arquitectura</a>
+      <a class="sidebar-link" data-section="diseno">Diseño concurrente</a>
+      <a class="sidebar-link" data-section="cores">Simulación de cores</a>
+      <a class="sidebar-link" data-section="algoritmos">Implementación de algoritmos</a>
+      <a class="sidebar-link" data-section="concurrencia">Manejo de concurrencia</a>
+      <a class="sidebar-link" data-section="memoria">Modelo de memoria</a>
+      <a class="sidebar-link" data-section="resultados">Resultados experimentales</a>
+      <a class="sidebar-link" data-section="escenarios">Escenarios de prueba</a>
+      <a class="sidebar-link" data-section="comparativo">Análisis comparativo</a>
+      <a class="sidebar-link" data-section="conclusiones">Conclusiones</a>
+      <a class="sidebar-link" data-section="futuro">Trabajo futuro</a>
+      <a class="sidebar-link" data-section="referencias">Referencias APA</a>
+      <a class="sidebar-link" data-section="honor">Código de honor</a>
+    </aside>
+
+    <main class="report-content" id="report-content">
+      <section class="report-section active" id="sec-intro">
+        <h1>Introducción</h1>
+        <p class="placeholder">Contenido completo del reporte se carga en Fase 8.</p>
+      </section>
+      <!-- El resto de secciones se inyectan dinámicamente desde js/data/report-content.js -->
+    </main>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="corner-decor">
+    <span>└─[ SCHED_SIM // REPORTE ]</span>
+    <span>UDEM · 2025 <span class="blink">█</span></span>
+  </div>
+
+</div><!-- /shell -->
+</div><!-- /crt-wrapper -->
+
+<script src="../js/ui/theme-toggle.js"></script>
+<!-- Sidebar navigation: básica para Fase 1, contenido completo en Fase 8 -->
+<script>
+(function () {
+  'use strict';
+  const links = document.querySelectorAll('.sidebar-link');
+  links.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      links.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      const section = link.getAttribute('data-section');
+      document.querySelectorAll('.report-section').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById('sec-' + section);
+      if (target) {
+        target.classList.add('active');
+      } else {
+        // En Fase 1 solo existe sec-intro; mostramos placeholder
+        const main = document.getElementById('report-content');
+        let placeholder = document.getElementById('sec-placeholder');
+        if (!placeholder) {
+          placeholder = document.createElement('section');
+          placeholder.id = 'sec-placeholder';
+          placeholder.className = 'report-section';
+          main.appendChild(placeholder);
+        }
+        placeholder.innerHTML = `<h1>${link.textContent}</h1><p class="placeholder">Contenido pendiente — se completa en Fase 8.</p>`;
+        placeholder.classList.add('active');
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

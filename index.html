@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCHED_SIM v2.0 // SISTEMA OPERATIVO — UDEM</title>
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  /* Estilos específicos de la landing — grid de cards */
+  .landing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border2);
+    border-top: none;
+  }
+  .module-card {
+    background: var(--bg);
+    padding: 28px 24px;
+    text-decoration: none;
+    color: var(--green-dim);
+    transition: all 0.18s;
+    border: 1px solid transparent;
+    display: block;
+  }
+  .module-card:hover {
+    background: var(--surface2);
+    color: var(--green);
+    border-color: var(--green-dim);
+    box-shadow: var(--glow-sm);
+  }
+  .module-card .mc-num {
+    font-family: var(--font-vt);
+    font-size: 14px;
+    color: var(--green-dk);
+    letter-spacing: 2px;
+  }
+  .module-card .mc-title {
+    font-family: var(--font-vt);
+    font-size: 32px;
+    color: var(--green);
+    text-shadow: var(--glow);
+    letter-spacing: 3px;
+    margin: 6px 0 10px;
+    line-height: 1;
+  }
+  .module-card .mc-desc {
+    font-size: 11px;
+    line-height: 1.7;
+    letter-spacing: 1px;
+  }
+  .module-card .mc-arrow {
+    margin-top: 16px;
+    font-size: 11px;
+    color: var(--green-dim);
+    letter-spacing: 2px;
+  }
+  .module-card:hover .mc-arrow { color: var(--green); }
+  .module-card:hover .mc-arrow::after {
+    content: ' ▶';
+    color: var(--green);
+  }
+
+  .meta-info {
+    padding: 14px 16px;
+    font-size: 10px;
+    line-height: 2;
+    color: var(--green-dim);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    letter-spacing: 1px;
+  }
+  .meta-info .lbl { color: var(--green-dk); }
+  .meta-info .val { color: var(--green); }
+</style>
+</head>
+<body>
+
+<div id="tooltip"></div>
+
+<div class="crt-wrapper">
+<div class="shell">
+
+  <!-- TITLE BAR -->
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <div class="titlebar-dots"><span></span><span></span><span></span></div>
+      SCHED_SIM v2.0 — SISTEMA OPERATIVO
+    </div>
+    <div class="titlebar-right">
+      <button class="theme-toggle" id="theme-toggle-btn" type="button">[ ◐ LIGHT ]</button>
+      <span id="clock">--:--:--</span>
+    </div>
+  </div>
+
+  <!-- BOOT HEADER -->
+  <div class="boot-header">
+    <div class="boot-line">KERNEL: SCHED_SIM 2.0.0 | BUILD: 2025 | ARCH: web/x86_64</div>
+    <div class="boot-line">UNIVERSIDAD DE MONTERREY · SISTEMAS OPERATIVOS · PROYECTO FINAL</div>
+    <div class="boot-title">SCHED_SIM<span class="prompt-blink"></span></div>
+    <div class="boot-sub">SIMULADOR DE SCHEDULING DE CPU · CONCURRENCIA · MEMORIA</div>
+  </div>
+
+  <!-- MODULE CARDS -->
+  <div class="landing-grid">
+    <a class="module-card" href="pages/simulator.html">
+      <div class="mc-num">[ MODULO 01 ]</div>
+      <div class="mc-title">SIMULADOR</div>
+      <div class="mc-desc">
+        Simulación interactiva de algoritmos de scheduling (FCFS, SJN, RR, SRT, HRRN, MLFQ).
+        Multi-core configurable, gestión de memoria, demos de concurrencia, visualización
+        tick-a-tick, métricas comparativas y código C de cada algoritmo.
+      </div>
+      <div class="mc-arrow">RUN_SIMULATOR</div>
+    </a>
+
+    <a class="module-card" href="pages/report.html">
+      <div class="mc-num">[ MODULO 02 ]</div>
+      <div class="mc-title">REPORTE</div>
+      <div class="mc-desc">
+        Reporte técnico completo: marco teórico (procesos, threads, fork, scheduling,
+        memoria), arquitectura del sistema, diseño concurrente, resultados experimentales,
+        análisis comparativo, conclusiones y referencias APA.
+      </div>
+      <div class="mc-arrow">OPEN_REPORT</div>
+    </a>
+  </div>
+
+  <!-- META -->
+  <div class="meta-info">
+    <div><span class="lbl">STACK     :</span> <span class="val">HTML5 · CSS3 · JavaScript (vanilla)</span></div>
+    <div><span class="lbl">EXEC      :</span> <span class="val">file:// — abrir directamente en navegador</span></div>
+    <div><span class="lbl">CRITERIOS :</span> <span class="val">multithreading, concurrencia, multi-core, memoria</span></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="corner-decor">
+    <span>└─[ SISTEMAS OPERATIVOS // SCHED_SIM v2.0 ]</span>
+    <span>READY <span class="blink">█</span></span>
+  </div>
+
+</div><!-- /shell -->
+</div><!-- /crt-wrapper -->
+
+<script src="js/ui/theme-toggle.js"></script>
+</body>
+</html>

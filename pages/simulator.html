@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCHED_SIM // SIMULADOR</title>
+<link rel="stylesheet" href="../css/theme.css">
+<link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="../css/simulator.css">
+</head>
+<body>
+
+<div id="tooltip"></div>
+
+<div class="crt-wrapper">
+<div class="shell">
+
+  <!-- TITLE BAR -->
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <div class="titlebar-dots"><span></span><span></span><span></span></div>
+      <a href="../index.html" style="color:inherit;text-decoration:none">SCHED_SIM</a> &nbsp;/&nbsp; SIMULADOR
+    </div>
+    <div class="titlebar-right">
+      <div class="core-leds" id="core-leds">
+        <span>CORES:</span>
+        <!-- LEDs se generan dinámicamente -->
+      </div>
+      <button class="theme-toggle" id="theme-toggle-btn" type="button">[ ◐ LIGHT ]</button>
+      <span id="clock">--:--:--</span>
+    </div>
+  </div>
+
+  <!-- BOOT HEADER -->
+  <div class="boot-header">
+    <div class="boot-line">> SCHED_SIM // CPU SCHEDULER</div>
+    <div class="boot-title">SIMULADOR<span class="prompt-blink"></span></div>
+    <div class="boot-sub">FCFS · SJN · RR · SRT · HRRN · MLFQ_1 · MLFQ_2</div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-bar" id="algo-tabs">
+    <button class="tab-btn active" data-algo="fcfs">FCFS</button>
+    <button class="tab-btn" data-algo="sjn">SJN</button>
+    <button class="tab-btn" data-algo="rr">RR</button>
+    <button class="tab-btn" data-algo="srt">SRT</button>
+    <button class="tab-btn" data-algo="hrrn">HRRN</button>
+    <button class="tab-btn" data-algo="mlfq1">MLFQ_1</button>
+    <button class="tab-btn" data-algo="mlfq2">MLFQ_2</button>
+  </div>
+
+  <!-- ALGO EXPLAIN -->
+  <div class="algo-explain" id="algo-explain">
+    <strong>FCFS — First Come First Served</strong>
+    <span class="tag tag-npre">NO-PREEMPTIVE</span><br>
+    Selecciona el módulo del simulador. Pendiente de cableo en Fase 2.
+  </div>
+
+  <!-- CONTROL BAR -->
+  <div class="control-bar">
+    <div class="control-group">
+      <button class="btn btn-run" id="btn-play" type="button">[ ▶ PLAY ]</button>
+      <button class="btn btn-add" id="btn-pause" type="button">[ ❚❚ PAUSE ]</button>
+      <button class="btn btn-add" id="btn-step" type="button">[ ▷| STEP ]</button>
+      <button class="btn btn-del" id="btn-reset" type="button">[ ↻ RESET ]</button>
+    </div>
+    <div class="control-group">
+      <span style="font-size:10px;color:var(--green-dim);letter-spacing:2px">SPEED:</span>
+      <select class="term-select" id="speed-select">
+        <option value="1">1x</option>
+        <option value="2" selected>2x</option>
+        <option value="5">5x</option>
+        <option value="10">10x</option>
+        <option value="0">INSTANT</option>
+      </select>
+    </div>
+    <div class="tick-display"><span class="tick-label">TICK:</span><span id="tick-val">0</span></div>
+  </div>
+
+  <!-- TWO COLUMN: PROCESS TABLE + CONFIG -->
+  <div class="two-col">
+    <div>
+      <div class="section-header">PROCESS TABLE</div>
+      <div class="proc-table-wrap">
+        <table class="ptable">
+          <thead><tr><th>PID</th><th>ARRIVAL</th><th>BURST</th><th>MEM (KB)</th><th></th></tr></thead>
+          <tbody id="proc-tbody">
+            <!-- filas inyectadas por simulator.js -->
+          </tbody>
+        </table>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-add" id="btn-add-proc" type="button">[ + PROCESS ]</button>
+        <button class="btn btn-amber" id="btn-load-scenario" type="button">[ ⌂ ESCENARIO ]</button>
+      </div>
+    </div>
+    <div>
+      <div class="section-header">CONFIG</div>
+      <div class="config-box">
+        <div class="config-row">
+          <label>CORES :</label>
+          <select class="term-select" id="cfg-cores">
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="4">4</option>
+          </select>
+        </div>
+        <div class="config-row">
+          <label>MEMORIA :</label>
+          <select class="term-select" id="cfg-memory">
+            <option value="256">256 KB</option>
+            <option value="512" selected>512 KB</option>
+            <option value="1024">1024 KB</option>
+          </select>
+        </div>
+        <div class="config-row" id="cfg-quantum-row">
+          <label>QUANTUM :</label>
+          <input class="term-input" type="number" id="cfg-quantum" value="4" min="1" style="width:70px">
+          <span style="font-size:10px;color:var(--green-dim)">units</span>
+        </div>
+        <div class="info-block" style="margin-top:8px">
+          <div><span class="cm">// Selector de algoritmo arriba</span></div>
+          <div><span class="cm">// Edita los procesos y presiona PLAY</span></div>
+          <div><span class="cm">// SPEED 0 = ejecución instantánea</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIZ + STATE DIAGRAM -->
+  <div class="two-col">
+    <div>
+      <div class="section-header">VISUALIZACIÓN</div>
+      <div class="viz-container" id="viz-container">
+        <div class="placeholder">VIZ del algoritmo activo (Fase 6)</div>
+      </div>
+    </div>
+    <div>
+      <div class="section-header">ESTADOS DE PROCESO</div>
+      <div class="state-diagram" id="state-diagram">
+        <div class="state-node">NEW</div>
+        <div class="state-node">READY</div>
+        <div class="state-node">RUNNING</div>
+        <div class="state-node">BLOCKED</div>
+        <div class="state-node">TERMINATED</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEMORY -->
+  <div class="section-header">MEMORIA</div>
+  <div class="memory-bar-wrapper" id="memory-bar-wrapper">
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--green-dim);letter-spacing:1px">
+      <span>USED: <span id="mem-used">0</span> KB</span>
+      <span>FRAG: <span id="mem-frag">0</span>%</span>
+      <span>TOTAL: <span id="mem-total">512</span> KB</span>
+    </div>
+    <div class="memory-bar" id="memory-bar">
+      <div class="memory-block free" style="width:100%">FREE 512 KB</div>
+    </div>
+  </div>
+
+  <!-- CONCURRENCY -->
+  <div class="section-header">CONCURRENCIA</div>
+  <div class="concurrency-panel" id="concurrency-panel">
+    <div class="placeholder">DEMO PRODUCTOR-CONSUMIDOR (Fase 7)</div>
+  </div>
+
+  <!-- VIEW TOGGLE: GANTT / MATRIX -->
+  <div class="view-toggle">
+    <span>VIEW:</span>
+    <button class="vtoggle-btn vactive" data-view="gantt" type="button">[ GANTT ]</button>
+    <button class="vtoggle-btn" data-view="matrix" type="button">[ MATRIX ]</button>
+    <button class="vtoggle-btn" data-view="both" type="button">[ BOTH ]</button>
+  </div>
+
+  <!-- GANTT + MATRIX -->
+  <div id="gantt-view" class="gantt-wrapper">
+    <div class="gantt-header">GANTT CHART — TICK-BY-TICK</div>
+    <div class="gantt-chart" id="gantt-chart">
+      <div class="placeholder">Sin datos. Presiona PLAY para iniciar.</div>
+    </div>
+    <div class="time-ruler" id="time-ruler"></div>
+  </div>
+
+  <div id="matrix-view" class="matrix-wrapper" style="display:none">
+    <div class="matrix-header">PROCESS-TIME MATRIX</div>
+    <div class="placeholder">Disponible tras ejecutar simulación.</div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-wrap" id="results-wrap">
+    <div class="results-header">PROCESS METRICS TABLE</div>
+    <div class="placeholder" style="padding:20px 16px">Sin resultados aún.</div>
+  </div>
+
+  <!-- C CODE -->
+  <div class="section-header">CÓDIGO C — IMPLEMENTACIÓN DE REFERENCIA</div>
+  <div style="padding:0 16px 16px">
+    <div class="c-code-panel" id="c-code-panel">// código C del algoritmo seleccionado se carga en Fase 8</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="corner-decor">
+    <span>└─[ SCHED_SIM // SIMULADOR ]</span>
+    <span id="proc-count">PROCS: 0 <span class="blink">█</span></span>
+  </div>
+
+</div><!-- /shell -->
+</div><!-- /crt-wrapper -->
+
+<script src="../js/ui/theme-toggle.js"></script>
+<!-- Más scripts se cargan en fases siguientes -->
+</body>
+</html>
