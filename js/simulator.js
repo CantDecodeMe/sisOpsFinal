@@ -231,6 +231,60 @@
     ledsEl.innerHTML = html;
   }
 
+  // ── Queue / State display ──────────────────────────────────────────────
+  function updateQueueDisplay(tick) {
+    var qEl = document.getElementById('queue-display');
+    var rEl = document.getElementById('running-display');
+    if (!qEl || !rEl) return;
+
+    var colorMap = {};
+    processes.forEach(function (p, i) { colorMap[p.pid] = COLORS[i % COLORS.length]; });
+
+    var runningSlots = (tick.cores || []).filter(function (s) { return s !== null; });
+    if (runningSlots.length === 0) {
+      rEl.innerHTML = '<span style="font-size:10px;color:var(--green-dk);letter-spacing:1px">IDLE</span>';
+    } else {
+      rEl.innerHTML = runningSlots.map(function (s) {
+        var c = s.color || colorMap[s.pid] || '#00ff41';
+        return '<div style="padding:3px 10px;border:1px solid ' + c + ';background:' + c +
+          ';color:#000;font-size:10px;letter-spacing:1px">' + s.pid +
+          ' <span style="font-size:8px">rem:' + s.remaining + '</span></div>';
+      }).join('');
+    }
+
+    var queue = tick.queue || [];
+    if (queue.length === 0) {
+      qEl.innerHTML = '<span style="font-size:10px;color:var(--green-dk);letter-spacing:1px">EMPTY</span>';
+    } else {
+      qEl.innerHTML = queue.map(function (s) {
+        var c = s.color || colorMap[s.pid] || '#00ff41';
+        return '<div style="padding:3px 10px;border:1px solid ' + c + ';color:' + c +
+          ';font-size:10px;letter-spacing:1px">' + s.pid +
+          ' <span style="font-size:8px">rem:' + s.remaining + '</span></div>';
+      }).join('');
+    }
+  }
+
+  function resetQueueDisplay() {
+    var qEl = document.getElementById('queue-display');
+    var rEl = document.getElementById('running-display');
+    var dash = '<span style="font-size:10px;color:var(--green-dk)">—</span>';
+    if (qEl) qEl.innerHTML = dash;
+    if (rEl) rEl.innerHTML = dash;
+  }
+
+  function updateStateDiagram(tick, isDone) {
+    var hasRunning = (tick.cores || []).some(function (s) { return s !== null; });
+    var hasReady   = (tick.queue || []).length > 0;
+    document.querySelectorAll('.state-node').forEach(function (n) {
+      var state = n.dataset.state || n.textContent.trim().toLowerCase();
+      n.classList.remove('active');
+      if (state === 'running'    && hasRunning) n.classList.add('active');
+      if (state === 'ready'      && hasReady)   n.classList.add('active');
+      if (state === 'terminated' && isDone)     n.classList.add('active');
+    });
+  }
+
   // ── Simulation Control ─────────────────────────────────────────────────
   function runSimulation(callback) {
     if (processes.length === 0) { alert('Agrega al menos un proceso.'); return; }
@@ -265,7 +319,24 @@
   function playSim() {
     clearInterval(playTimer);
     if (simResult && tickIndex < simResult.ticks.length) {
-      // Resume from current position
+      if (getSpeed() === 0) {
+        // INSTANT resume: render remaining ticks at once
+        for (var i = tickIndex; i < simResult.ticks.length; i++) {
+          var allPids = processes.map(function (p, i2) { return { pid: p.pid, color: COLORS[i2 % COLORS.length], at: p.arrival }; });
+          window.SCHED.gantt.renderTick(simResult.ticks[i], allPids);
+        }
+        tickIndex = simResult.ticks.length;
+        var last = simResult.ticks[simResult.ticks.length - 1];
+        if (last) {
+          document.getElementById('tick-val').textContent = last.tick;
+          updateCoreLedsFromTick(last);
+          if (last.memory) window.SCHED.memoryBar.render(last.memory, getConfig().memory);
+          updateQueueDisplay(last);
+          updateStateDiagram(last, true);
+        }
+        renderResults();
+        return;
+      }
       startAnimation();
       return;
     }
@@ -274,7 +345,6 @@
     runSimulation(function () {
       var speed = getSpeed();
       if (speed === 0) {
-        // INSTANT: render everything at once
         renderAllTicks();
         renderResults();
       } else {
@@ -286,19 +356,26 @@
   function startAnimation() {
     clearInterval(playTimer);
     var speed = getSpeed();
-    var delay = Math.round(1000 / (speed * 4)); // ticks/sec scaled by speed
+    if (speed === 0) {
+      renderAllTicks();
+      renderResults();
+      return;
+    }
+    var delay = Math.round(1000 / (speed * 4));
     playTimer = setInterval(function () {
       if (!simResult || tickIndex >= simResult.ticks.length) {
         clearInterval(playTimer);
         renderResults();
         return;
       }
-      var tick = simResult.ticks[tickIndex];
+      var tick    = simResult.ticks[tickIndex];
       var allPids = processes.map(function (p, i) { return { pid: p.pid, color: COLORS[i % COLORS.length], at: p.arrival }; });
       window.SCHED.gantt.renderTick(tick, allPids);
       document.getElementById('tick-val').textContent = tick.tick;
       updateCoreLedsFromTick(tick);
       if (tick.memory) window.SCHED.memoryBar.render(tick.memory, getConfig().memory);
+      updateQueueDisplay(tick);
+      updateStateDiagram(tick, false);
       tickIndex++;
     }, delay);
   }
@@ -314,9 +391,10 @@
       document.getElementById('tick-val').textContent = lastTick.tick;
       updateCoreLedsFromTick(lastTick);
       if (lastTick.memory) window.SCHED.memoryBar.render(lastTick.memory, getConfig().memory);
+      updateQueueDisplay(lastTick);
+      updateStateDiagram(lastTick, true);
     }
     tickIndex = simResult.ticks.length;
-    window.SCHED.matrix.render(simResult.ticks, allPids);
   }
 
   function pauseSim() {
@@ -343,7 +421,10 @@
     updateCoreLedsFromTick(tick);
     if (tick.memory) window.SCHED.memoryBar.render(tick.memory, getConfig().memory);
     tickIndex++;
-    if (tickIndex >= simResult.ticks.length) renderResults();
+    var isDone = tickIndex >= simResult.ticks.length;
+    updateQueueDisplay(tick);
+    updateStateDiagram(tick, isDone);
+    if (isDone) renderResults();
   }
 
   function resetSim() {
@@ -360,6 +441,8 @@
     window.SCHED.memoryBar.reset(getConfig().memory);
     document.getElementById('tick-val').textContent = '0';
     updateCoreLeds();
+    resetQueueDisplay();
+    document.querySelectorAll('.state-node').forEach(function (n) { n.classList.remove('active'); });
     document.getElementById('results-wrap').innerHTML =
       '<div class="results-header">PROCESS METRICS TABLE</div>' +
       '<div class="placeholder" style="padding:20px 16px">Sin resultados aún.</div>';
@@ -369,9 +452,12 @@
   function renderResults() {
     if (!simResult) return;
 
-    // Matrix view
     var allPids = processes.map(function (p, i) { return { pid: p.pid, color: COLORS[i % COLORS.length], at: p.arrival }; });
     window.SCHED.matrix.render(simResult.ticks, allPids);
+
+    // Final state: show TERMINATED and empty queue/running
+    var lastTick = simResult.ticks[simResult.ticks.length - 1];
+    if (lastTick) updateStateDiagram(lastTick, true);
 
     var metrics = simResult.metrics;
     var summary = simResult.summary;
@@ -414,12 +500,6 @@
       '</div>';
 
     document.getElementById('results-wrap').innerHTML = html;
-
-    // State diagram: highlight TERMINATED
-    document.querySelectorAll('.state-node').forEach(function (n) {
-      n.classList.remove('active');
-      if (n.textContent.trim() === 'TERMINATED') n.classList.add('active');
-    });
   }
 
   function statBox(lbl, val, unit) {

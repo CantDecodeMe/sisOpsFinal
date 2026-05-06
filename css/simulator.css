@@ -468,6 +468,13 @@ table.rtable tr.avg-row td {
   box-shadow: var(--glow-sm);
 }
 
+.state-arrow {
+  color: var(--green-dk);
+  font-size: 13px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
 /* ─── MEMORY BAR (placeholder hasta Fase 5) ──────────── */
 .memory-bar-wrapper {
   padding: 16px;
