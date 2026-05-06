@@ -12,6 +12,7 @@ var SCHED_UTILS = (function () {
         at:        Number(p.arrival),
         bt:        Number(p.burst),
         mem:       Number(p.mem) || 0,
+        priority:  Number(p.priority) || 1,
         remaining: Number(p.burst),
         state:     'new',
         ct:        null,

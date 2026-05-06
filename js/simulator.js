@@ -2,23 +2,25 @@
 /* simulator.js — Orquestador principal del simulador */
 (function () {
   // ── Estado global ──────────────────────────────────────────────────────
-  var processes  = [];   // { pid, arrival, burst, mem }
-  var pidCounter = 0;
-  var activeAlgo = 'fcfs';
-  var simResult  = null; // resultado completo de la simulación
-  var tickIndex  = 0;    // tick actualmente mostrado
-  var playTimer  = null; // setInterval de la animación
-  var worker     = null; // Web Worker activo
+  var processes   = [];   // { pid, arrival, burst, mem, priority }
+  var pidCounter  = 0;
+  var activeAlgo  = 'fcfs';
+  var isPreemptive = true; // para algoritmo PRIORITY
+  var simResult   = null; // resultado completo de la simulación
+  var tickIndex   = 0;    // tick actualmente mostrado
+  var playTimer   = null; // setInterval de la animación
+  var worker      = null; // Web Worker activo
 
   // ── Descripciones de algoritmos ───────────────────────────────────────
   var ALGO_INFO = {
-    fcfs:  { name: 'FCFS — First Come First Served',   tag: 'NO-PREEMPTIVE', tagCls: 'tag-npre', desc: 'Ejecuta procesos en orden de llegada. Simple pero puede causar efecto convoy en procesos cortos.' },
-    sjn:   { name: 'SJN — Shortest Job Next',          tag: 'NO-PREEMPTIVE', tagCls: 'tag-npre', desc: 'Selecciona el proceso con menor burst entre los disponibles. Óptimo en tiempo de espera promedio.' },
-    rr:    { name: 'RR — Round Robin',                 tag: 'PREEMPTIVE',    tagCls: 'tag-pre',  desc: 'Asigna un quantum de tiempo a cada proceso en orden circular. Equitativo, buen tiempo de respuesta.' },
-    srt:   { name: 'SRT — Shortest Remaining Time',    tag: 'PREEMPTIVE',    tagCls: 'tag-pre',  desc: 'Versión preemptiva de SJN: expulsa al proceso actual si llega uno con menor tiempo restante.' },
-    hrrn:  { name: 'HRRN — Highest Response Ratio Next', tag: 'NO-PREEMPTIVE', tagCls: 'tag-npre', desc: 'Prioridad = (espera + burst) / burst. Evita starvation ponderando la espera acumulada.' },
-    mlfq1: { name: 'MLFQ_1 — Multi-Level Feedback Queue', tag: 'MLFQ',       tagCls: 'tag-mlfq', desc: '3 colas (Q0:q=4, Q1:q=8, Q2:FCFS). Procesos se degradan al agotar su quantum.' },
-    mlfq2: { name: 'MLFQ_2 — MLFQ con Aging',         tag: 'MLFQ',          tagCls: 'tag-mlfq', desc: 'MLFQ_1 + aging: procesos en colas inferiores se promueven tras esperar demasiado. Anti-starvation.' }
+    fcfs:     { name: 'FCFS — First Come First Served',      tag: 'NO-PREEMPTIVE', tagCls: 'tag-npre', desc: 'Ejecuta procesos en orden de llegada. Simple pero puede causar efecto convoy en procesos cortos.' },
+    sjn:      { name: 'SJN — Shortest Job Next',             tag: 'NO-PREEMPTIVE', tagCls: 'tag-npre', desc: 'Selecciona el proceso con menor burst entre los disponibles. Óptimo en tiempo de espera promedio.' },
+    rr:       { name: 'RR — Round Robin',                    tag: 'PREEMPTIVE',    tagCls: 'tag-pre',  desc: 'Asigna un quantum de tiempo a cada proceso en orden circular. Equitativo, buen tiempo de respuesta.' },
+    srt:      { name: 'SRT — Shortest Remaining Time',       tag: 'PREEMPTIVE',    tagCls: 'tag-pre',  desc: 'Versión preemptiva de SJN: expulsa al proceso actual si llega uno con menor tiempo restante.' },
+    hrrn:     { name: 'HRRN — Highest Response Ratio Next',  tag: 'NO-PREEMPTIVE', tagCls: 'tag-npre', desc: 'Prioridad = (espera + burst) / burst. Evita starvation ponderando la espera acumulada.' },
+    mlq:      { name: 'MLQ — Multilevel Queue',              tag: 'FIXED QUEUES',  tagCls: 'tag-mlfq', desc: '3 colas fijas por prioridad (Q0:RR q=4, Q1:RR q=8, Q2:FCFS). Prioridad 1-2→Q0, 3-4→Q1, 5+→Q2. Sin movimiento entre colas.' },
+    mlfq:     { name: 'MLFQ — Multi-Level Feedback Queue',  tag: 'MLFQ+AGING',    tagCls: 'tag-mlfq', desc: '3 colas con feedback: procesos se degradan al agotar quantum. Aging anti-starvation: tras esperar 16 ticks se promueven.' },
+    priority: { name: 'PRIORITY — Priority Scheduling',      tag: 'PRE / NO-PRE',  tagCls: 'tag-pre',  desc: 'Asigna CPU al proceso de mayor prioridad (número más bajo = mayor prioridad). Toggle PRE/NO-PRE en config.' }
   };
 
   // ── Paleta de colores (sincronizada con scheduler-utils) ───────────────
@@ -40,9 +42,9 @@
 
   function loadDefaultProcesses() {
     processes = [
-      { pid: 'P1', arrival: 0, burst: 8,  mem: 64  },
-      { pid: 'P2', arrival: 2, burst: 4,  mem: 32  },
-      { pid: 'P3', arrival: 4, burst: 6,  mem: 48  }
+      { pid: 'P1', arrival: 0, burst: 8,  mem: 64, priority: 2, pages: 8 },
+      { pid: 'P2', arrival: 2, burst: 4,  mem: 32, priority: 1, pages: 4 },
+      { pid: 'P3', arrival: 4, burst: 6,  mem: 48, priority: 3, pages: 6 }
     ];
     pidCounter = 3;
   }
@@ -50,9 +52,10 @@
   // ── Config ─────────────────────────────────────────────────────────────
   function getConfig() {
     return {
-      cores:   parseInt(document.getElementById('cfg-cores').value)   || 1,
-      memory:  parseInt(document.getElementById('cfg-memory').value)  || 512,
-      quantum: parseInt(document.getElementById('cfg-quantum').value) || 4
+      cores:      parseInt(document.getElementById('cfg-cores').value)   || 1,
+      memory:     parseInt(document.getElementById('cfg-memory').value)  || 512,
+      quantum:    parseInt(document.getElementById('cfg-quantum').value) || 4,
+      preemptive: isPreemptive
     };
   }
 
@@ -61,9 +64,11 @@
   }
 
   function wireQuantumVisibility() {
-    var row = document.getElementById('cfg-quantum-row');
+    var qRow  = document.getElementById('cfg-quantum-row');
+    var pRow  = document.getElementById('cfg-preemptive-row');
     function update() {
-      row.style.display = (activeAlgo === 'rr' || activeAlgo === 'mlfq1' || activeAlgo === 'mlfq2') ? '' : 'none';
+      qRow.style.display = (activeAlgo === 'rr' || activeAlgo === 'mlq' || activeAlgo === 'mlfq') ? '' : 'none';
+      pRow.style.display = (activeAlgo === 'priority') ? '' : 'none';
     }
     update();
     document.getElementById('algo-tabs').addEventListener('click', update);
@@ -81,6 +86,8 @@
         '<td><input class="term-input" type="number" value="' + p.arrival + '" min="0" data-pid="' + p.pid + '" data-field="arrival" style="width:56px"></td>' +
         '<td><input class="term-input" type="number" value="' + p.burst + '" min="1" data-pid="' + p.pid + '" data-field="burst" style="width:56px"></td>' +
         '<td><input class="term-input" type="number" value="' + p.mem + '" min="0" data-pid="' + p.pid + '" data-field="mem" style="width:64px"></td>' +
+        '<td><input class="term-input" type="number" value="' + (p.priority || 1) + '" min="1" data-pid="' + p.pid + '" data-field="priority" style="width:56px"></td>' +
+        '<td><input class="term-input" type="number" value="' + (p.pages || 4) + '" min="1" data-pid="' + p.pid + '" data-field="pages" style="width:55px"></td>' +
         '<td><button class="btn btn-del" data-del="' + p.pid + '" type="button">[ × ]</button></td>';
       tbody.appendChild(tr);
     });
@@ -103,7 +110,7 @@
 
   function addProcess() {
     pidCounter++;
-    processes.push({ pid: 'P' + pidCounter, arrival: 0, burst: 4, mem: 32 });
+    processes.push({ pid: 'P' + pidCounter, arrival: 0, burst: 4, mem: 32, priority: 1, pages: 4 });
     renderProcTable();
   }
 
@@ -158,6 +165,8 @@
   function wireControls() {
     document.getElementById('btn-add-proc').addEventListener('click', addProcess);
     document.getElementById('btn-load-scenario').addEventListener('click', showScenarioPicker);
+    document.getElementById('btn-import-proc').addEventListener('click', importProcs);
+    document.getElementById('btn-export-proc').addEventListener('click', exportProcs);
     document.getElementById('btn-play').addEventListener('click', playSim);
     document.getElementById('btn-pause').addEventListener('click', pauseSim);
     document.getElementById('btn-step').addEventListener('click', stepSim);
@@ -174,6 +183,21 @@
     });
 
     document.getElementById('cfg-cores').addEventListener('change', updateCoreLeds);
+
+    // Preemptive toggle para PRIORITY
+    document.getElementById('btn-preemptive').addEventListener('click', function () {
+      isPreemptive = true;
+      document.getElementById('btn-preemptive').className = 'btn btn-run';
+      document.getElementById('btn-nonpreemptive').className = 'btn btn-add';
+    });
+    document.getElementById('btn-nonpreemptive').addEventListener('click', function () {
+      isPreemptive = false;
+      document.getElementById('btn-preemptive').className = 'btn btn-add';
+      document.getElementById('btn-nonpreemptive').className = 'btn btn-run';
+    });
+
+    // Botón comparar
+    document.getElementById('btn-compare').addEventListener('click', runComparison);
 
     // View toggle: GANTT / MATRIX / BOTH
     document.querySelectorAll('.vtoggle-btn').forEach(function (btn) {
@@ -307,12 +331,13 @@
     };
 
     worker.postMessage({
-      type:      'run',
-      algorithm: activeAlgo,
-      processes: processes,
-      cores:     cfg.cores,
-      memory:    cfg.memory,
-      quantum:   cfg.quantum
+      type:       'run',
+      algorithm:  activeAlgo,
+      processes:  processes,
+      cores:      cfg.cores,
+      memory:     cfg.memory,
+      quantum:    cfg.quantum,
+      preemptive: cfg.preemptive
     });
   }
 
@@ -463,7 +488,10 @@
     var summary = simResult.summary;
     if (!metrics || metrics.length === 0) return;
 
-    var html = '<div class="results-header">PROCESS METRICS TABLE</div>';
+    var html = '<div class="results-header" style="display:flex;justify-content:space-between;align-items:center">' +
+      'PROCESS METRICS TABLE' +
+      '<button class="btn btn-add" style="font-size:13px;padding:3px 10px" onclick="window.SCHED._exportResults()">[ ↓ EXPORTAR RESULTADOS ]</button>' +
+      '</div>';
     html += '<table class="rtable"><thead><tr>';
     ['PID','ARRIVAL','BURST','COMPLETION','TAT','WAIT','RESPONSE'].forEach(function (h) {
       html += '<th>' + h + '</th>';
@@ -624,6 +652,87 @@
     var log = document.getElementById('pc-log');
     if (log) log.innerHTML = '';
     pcLog('Demo reiniciado');
+  }
+
+  // ── Import / Export ────────────────────────────────────────────────────
+  function importProcs() {
+    window.SCHED.fileIO.openFilePicker('.txt,.csv', function (text) {
+      var imported = window.SCHED.fileIO.parseProcCSV(text);
+      if (!imported || imported.length === 0) {
+        alert('No se pudo leer el archivo. Verifica el formato:\nPID,Arrival,Burst,Priority,Mem');
+        return;
+      }
+      processes  = imported;
+      pidCounter = imported.length;
+      renderProcTable();
+      resetSim();
+    });
+  }
+
+  function exportProcs() {
+    var headers = ['PID', 'Arrival', 'Burst', 'Priority', 'Mem', 'Pages'];
+    var rows    = processes.map(function (p) {
+      return [p.pid, p.arrival, p.burst, p.priority || 1, p.mem, p.pages || 4];
+    });
+    window.SCHED.fileIO.download('procesos.csv', window.SCHED.fileIO.toCSV(headers, rows));
+  }
+
+  function exportResults() {
+    if (!simResult || !simResult.metrics || simResult.metrics.length === 0) {
+      alert('Ejecuta una simulación primero.'); return;
+    }
+    var headers = ['PID', 'Arrival', 'Burst', 'Completion', 'TAT', 'WaitTime', 'ResponseTime'];
+    var rows    = simResult.metrics.map(function (m) {
+      return [m.pid, m.at, m.bt, m.ct || '', m.tat, m.wt, m.rt];
+    });
+    var summary = simResult.summary;
+    rows.push([]);
+    rows.push(['AVG', '', '', '', summary.avgTAT.toFixed(2), summary.avgWT.toFixed(2), summary.avgRT.toFixed(2)]);
+    window.SCHED.fileIO.download('resultados-' + activeAlgo + '.csv', window.SCHED.fileIO.toCSV(headers, rows));
+  }
+
+  // Exponer exportResults globalmente para el botón generado en renderResults()
+  window.SCHED._exportResults = exportResults;
+
+  // ── Comparación de Algoritmos ──────────────────────────────────────────
+  function runComparison() {
+    if (processes.length === 0) { alert('Agrega al menos un proceso.'); return; }
+
+    var panel   = document.getElementById('compare-panel');
+    var content = document.getElementById('compare-content');
+    panel.style.display = '';
+    content.innerHTML = '<div class="placeholder" style="padding:20px">Ejecutando todos los algoritmos<span class="blink">█</span></div>';
+
+    var cfg  = getConfig();
+    var algos = ['fcfs','sjn','rr','srt','hrrn','mlq','mlfq','priority'];
+    var results = {};
+    var done    = 0;
+
+    algos.forEach(function (algo) {
+      var w = new Worker('../js/worker/simulation-worker.js');
+      var finish = function () {
+        done++;
+        w.terminate();
+        if (done === algos.length) window.SCHED.compare.render(content, algos, results);
+      };
+      w.onmessage = function (e) {
+        if (e.data.type === 'complete') { results[algo] = e.data.result.summary; finish(); }
+        else if (e.data.type === 'error') { console.error('Compare worker error (' + algo + '):', e.data.message); finish(); }
+      };
+      w.onerror = function (err) {
+        console.error('Compare worker exception (' + algo + '):', err.message);
+        finish();
+      };
+      w.postMessage({
+        type:       'run',
+        algorithm:  algo,
+        processes:  processes,
+        cores:      cfg.cores,
+        memory:     cfg.memory,
+        quantum:    cfg.quantum,
+        preemptive: cfg.preemptive
+      });
+    });
   }
 
   // Init concurrency panel once DOM is ready

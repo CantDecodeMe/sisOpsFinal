@@ -21,7 +21,7 @@
   align-items: center;
 }
 
-.control-group .btn { padding: 4px 10px; font-size: 11px; }
+.control-group .btn { padding: 5px 12px; font-size: 17px; }
 
 .tick-display {
   font-family: var(--font-vt);
@@ -34,7 +34,7 @@
 }
 
 .tick-display .tick-label {
-  font-size: 10px;
+  font-size: 17px;
   color: var(--green-dim);
   letter-spacing: 2px;
   margin-right: 6px;
@@ -45,7 +45,7 @@
   display: flex;
   gap: 6px;
   align-items: center;
-  font-size: 9px;
+  font-size: 17px;
   color: var(--green-dim);
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -75,7 +75,7 @@
 }
 
 .gantt-header {
-  font-size: 10px;
+  font-size: 17px;
   letter-spacing: 2px;
   color: var(--green-dim);
   text-transform: uppercase;
@@ -101,8 +101,8 @@
 }
 
 .gantt-lbl {
-  width: 40px;
-  font-size: 10px;
+  width: 46px;
+  font-size: 17px;
   color: var(--green-dim);
   text-align: right;
   flex-shrink: 0;
@@ -123,7 +123,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 17px;
   letter-spacing: 1px;
   font-weight: bold;
   overflow: hidden;
@@ -149,10 +149,10 @@
 
 .time-ruler {
   display: flex;
-  margin-left: 46px;
+  margin-left: 52px;
   min-width: 600px;
   margin-top: 3px;
-  font-size: 9px;
+  font-size: 17px;
   color: var(--green-dk);
   border-top: 1px solid var(--border);
   padding-top: 3px;
@@ -174,7 +174,7 @@
 }
 
 .matrix-header {
-  font-size: 10px;
+  font-size: 17px;
   letter-spacing: 2px;
   color: var(--green-dim);
   text-transform: uppercase;
@@ -194,7 +194,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 9px;
+  font-size: 17px;
   letter-spacing: 1px;
   color: var(--green-dim);
   text-transform: uppercase;
@@ -225,7 +225,7 @@ table.matrix-table th.pid-th {
   background: var(--bg);
   z-index: 3;
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: 17px;
   letter-spacing: 1px;
   color: var(--green-dim);
   border-right: 1px solid var(--border2);
@@ -238,7 +238,7 @@ table.matrix-table th.pid-th {
 
 table.matrix-table th.time-th {
   padding: 3px 0;
-  font-size: 8px;
+  font-size: 17px;
   color: var(--green-dk);
   text-align: center;
   border-bottom: 1px solid var(--border2);
@@ -269,7 +269,7 @@ table.matrix-table td.pid-cell {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: 17px;
   letter-spacing: 1px;
 }
 
@@ -302,7 +302,7 @@ table.matrix-table td.mx-cell:hover { filter: brightness(1.5); z-index: 5; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 7px;
+  font-size: 17px;
   font-weight: bold;
   color: inherit;
 }
@@ -351,7 +351,7 @@ table.matrix-table td.mx-cell:hover { filter: brightness(1.5); z-index: 5; }
 }
 
 .view-toggle span {
-  font-size: 9px;
+  font-size: 17px;
   letter-spacing: 2px;
   color: var(--green-dk);
   text-transform: uppercase;
@@ -359,7 +359,7 @@ table.matrix-table td.mx-cell:hover { filter: brightness(1.5); z-index: 5; }
 
 .vtoggle-btn {
   font-family: var(--font);
-  font-size: 10px;
+  font-size: 17px;
   letter-spacing: 1px;
   text-transform: uppercase;
   padding: 4px 12px;
@@ -389,7 +389,7 @@ table.matrix-table td.mx-cell:hover { filter: brightness(1.5); z-index: 5; }
 
 .results-header {
   padding: 8px 16px;
-  font-size: 10px;
+  font-size: 17px;
   letter-spacing: 2px;
   color: var(--green-dim);
   text-transform: uppercase;
@@ -402,7 +402,7 @@ table.matrix-table td.mx-cell:hover { filter: brightness(1.5); z-index: 5; }
 table.rtable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 17px;
   min-width: 550px;
 }
 
@@ -410,7 +410,7 @@ table.rtable th {
   padding: 7px 12px;
   background: var(--surface);
   color: var(--green-dim);
-  font-size: 10px;
+  font-size: 17px;
   letter-spacing: 2px;
   text-transform: uppercase;
   text-align: center;
@@ -435,7 +435,7 @@ table.rtable tr.avg-row td {
   color: var(--green);
   text-shadow: var(--glow-sm);
   background: var(--surface2);
-  font-size: 11px;
+  font-size: 17px;
   letter-spacing: 1px;
 }
 
@@ -455,7 +455,7 @@ table.rtable tr.avg-row td {
   padding: 8px 14px;
   border: 1px solid var(--green-dk);
   color: var(--green-dk);
-  font-size: 10px;
+  font-size: 17px;
   letter-spacing: 2px;
   text-transform: uppercase;
   margin: 4px;
@@ -485,7 +485,7 @@ table.rtable tr.avg-row td {
   box-shadow: 0 0 8px #00ff4199, 0 0 18px #00ff4144;
 }
 
-.state-node[data-state="blocked"].active {
+.state-node[data-state="waiting"].active {
   background: var(--red);
   border-color: var(--red);
   box-shadow: 0 0 8px #ff313199, 0 0 18px #ff313144;
@@ -499,7 +499,7 @@ table.rtable tr.avg-row td {
 
 .state-arrow {
   color: var(--green-dk);
-  font-size: 13px;
+  font-size: 17px;
   flex-shrink: 0;
   user-select: none;
 }
@@ -526,7 +526,7 @@ table.rtable tr.avg-row td {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 17px;
   letter-spacing: 1px;
   border-right: 1px solid rgba(0,0,0,0.4);
 }
@@ -562,7 +562,7 @@ table.rtable tr.avg-row td {
   background: var(--black);
   border: 1px solid var(--border);
   padding: 12px 14px;
-  font-size: 11px;
+  font-size: 17px;
   line-height: 1.7;
   color: var(--green-dim);
   overflow-x: auto;
@@ -583,7 +583,7 @@ table.rtable tr.avg-row td {
   padding: 24px 16px;
   color: var(--green-dk);
   text-align: center;
-  font-size: 11px;
+  font-size: 17px;
   letter-spacing: 2px;
   text-transform: uppercase;
 }

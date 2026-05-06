@@ -12,17 +12,19 @@ importScripts(
   '../scheduler/rr.js',
   '../scheduler/srt.js',
   '../scheduler/hrrn.js',
-  '../scheduler/mlfq.js'
+  '../scheduler/mlfq.js',
+  '../scheduler/priority.js'
 );
 
 var ALGO_MAP = {
-  fcfs:  function (p, c) { return FCFS.run(p, c); },
-  sjn:   function (p, c) { return SJN.run(p, c); },
-  rr:    function (p, c) { return RR.run(p, c); },
-  srt:   function (p, c) { return SRT.run(p, c); },
-  hrrn:  function (p, c) { return HRRN.run(p, c); },
-  mlfq1: function (p, c) { return MLFQ.run(p, Object.assign({}, c, { variant: 'mlfq1' })); },
-  mlfq2: function (p, c) { return MLFQ.run(p, Object.assign({}, c, { variant: 'mlfq2' })); }
+  fcfs:     function (p, c) { return FCFS.run(p, c); },
+  sjn:      function (p, c) { return SJN.run(p, c); },
+  rr:       function (p, c) { return RR.run(p, c); },
+  srt:      function (p, c) { return SRT.run(p, c); },
+  hrrn:     function (p, c) { return HRRN.run(p, c); },
+  mlq:      function (p, c) { return MLFQ.run(p, Object.assign({}, c, { variant: 'mlq'  })); },
+  mlfq:     function (p, c) { return MLFQ.run(p, Object.assign({}, c, { variant: 'mlfq' })); },
+  priority: function (p, c) { return PRIORITY.run(p, c); }
 };
 
 self.onmessage = function (e) {
@@ -37,9 +39,10 @@ self.onmessage = function (e) {
   }
 
   var config = {
-    cores:   Number(msg.cores)   || 1,
-    memory:  Number(msg.memory)  || 512,
-    quantum: Number(msg.quantum) || 4
+    cores:      Number(msg.cores)   || 1,
+    memory:     Number(msg.memory)  || 512,
+    quantum:    Number(msg.quantum) || 4,
+    preemptive: msg.preemptive !== false
   };
 
   try {

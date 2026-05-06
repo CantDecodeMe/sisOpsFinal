@@ -1,0 +1,224 @@
+Definición del Proyecto Final
+OBJETIVO DEL PROYECTO
+Desarrollar un Simulador Visual que represente de manera gráfica el funcionamiento de:
+Algoritmos de Planificación de CPU
+Algoritmos de Paginación de Memoria
+El objetivo principal es que el alumno visualice cómo funcionan los algoritmos, cómo cambian los estados de los procesos y cómo se administra la memoria.
+El proyecto es educativo y visual, no administrativo.
+ 
+ALCANCE DEL PROYECTO (IMPORTANTE)
+El simulador debe incluir ÚNICAMENTE:
+Módulo
+Incluye
+Procesos
+Sí
+Estados
+Sí
+Scheduling
+Sí
+Paginación
+Sí
+Reemplazo de páginas
+Sí
+Threads
+Sí
+ 
+MÓDULO 1 – PROCESOS
+El sistema debe permitir introducir procesos con:
+PID
+Arrival Time
+Burst Time
+Priority
+Número de páginas
+Estados que deben mostrarse gráficamente:
+New
+Ready
+Running
+Waiting
+Terminated
+Debe existir una representación visual de los estados (diagrama de estados).
+ 
+MÓDULO 2 – PLANIFICACIÓN DE CPU (SCHEDULING)
+El simulador debe incluir:
+Algoritmos Non-Preemptive
+FCFS
+SJF
+HRRN
+Algoritmos Preemptive
+Round Robin
+SRTF
+Priority (Preemptive)
+Multilevel Queue
+Multilevel Feedback Queue
+Lo que debe mostrar el simulador, para cada algoritmo debe mostrar:
+Cola de listos
+Proceso en ejecución
+Cambios de contexto
+Diagrama de Gantt
+Completion Time
+Turnaround Time
+Waiting Time
+Response Time
+Promedios
+CPU Utilization
+El usuario debe poder cambiar:
+Quantum
+Prioridades
+Arrival time
+Burst time
+ 
+MÓDULO 3 – PAGINACIÓN DE MEMORIA
+El simulador debe permitir configurar:
+Tamaño de memoria
+Tamaño de página
+Número de marcos
+Número de páginas por proceso
+Debe mostrar visualmente:
+Memoria principal
+Marcos de página
+Páginas cargadas
+Page faults
+Fragmentación interna
+ALGORITMOS DE PAGINACIÓN (REEMPLAZO), el simulador debe incluir:
+FIFO
+LRU
+Óptimo
+Clock
+Segunda oportunidad
+El simulador debe mostrar:
+Qué página entra
+Qué página sale
+Page fault
+Memoria en cada instante
+Número total de fallos de página
+ 
+ENTRADA DE DATOS: El simulador debe permitir dos formas:
+Entrada manual
+El usuario introduce:
+Procesos
+Arrival time
+Burst time
+Priority
+Número de páginas
+Quantum
+Tamaño de memoria
+Tamaño de página
+Entrada desde archivo
+Ejemplo: procesos.txt
+PID,Arrival,Burst,Priority,Pages
+1,0,5,2,4
+2,1,3,1,3
+3,2,7,3,5
+
+ 
+Ejemplo: memoria.txt
+Memoria=64
+PageSize=4
+Frames=16
+ 
+INTERFAZ GRÁFICA (MUY IMPORTANTE): El simulador debe ser visual, animado e interactivo, y la GUI debe mostrar:
+Elemento
+Visualización
+Estados de procesos
+Diagrama
+Cola Ready
+Cola visual
+CPU
+Proceso en ejecución
+Scheduling
+Diagrama de Gantt
+Memoria
+Bloques
+Páginas
+Tabla
+Page Faults
+Contador
+Reemplazo
+Animación
+Comparación algoritmos
+Gráfica
+ 
+TECNOLOGÍAS RECOMENDADAS
+Lenguaje
+GUI
+Python
+Tkinter / PyQt
+Java
+JavaFX
+JavaScript
+HTML + Canvas
+C#
+Windows Forms
+ 
+Les recomiendo Python + PyQt o HTML + JavaScript o Node.js, aunque también puede hacerse con Flask, Jinja2 + JavaScript
+  
+ 
+ENTREGABLES
+Entregable
+Descripción
+Simulador
+Funcionando en cada una de sus cuentas en ubiquitous.udem.edu
+Código
+Comentado
+Manual
+Cómo usar
+Reporte
+Explicación y reporte técnico de acuerdo a rúbrica de proyecto final
+Video
+25 min colgado en youtube
+Presentación
+Exposición presencial de no más de 10 minutos con cronómetro
+ 
+CRITERIOS DE EVALUACIÓN
+Criterio
+Porcentaje
+Scheduling
+30%
+Paginación
+30%
+GUI
+20%
+Métricas
+10%
+Reporte
+5%
+Video
+5%
+ 
+RESULTADO ESPERADO: El resultado debe ser un simulador visual donde se pueda:
+Crear procesos
+Ejecutar algoritmos de scheduling
+Ver diagrama de Gantt
+Simular memoria
+Ver page faults
+Ver reemplazo de páginas
+Comparar algoritmos
+Cambiar parámetros
+Ver métricas
+ 
+El simulador debe de tener al menos las siguientes vistas:
+Pantalla de captura de procesos
+Pantalla de Scheduling → Gantt
+Pantalla de Memoria → Marcos y páginas
+Pantalla de Page Replacement
+Pantalla de Métricas
+Pantalla de Comparación de algoritmos
+Pantalla
+Descripción
+Captura de procesos
+Ingresar procesos
+Scheduling
+Diagrama de Gantt
+Memoria
+Marcos
+Page Replacement
+Reemplazo
+Métricas
+Resultados
+Comparación
+Algoritmos
+ 
+
+
+EJEMPLO DE PROYECTO
+OJO este es un simple ejemplo de como preparar la GUI, recordemos que en nuestro caso el usuario deberá de introducir los valores de cada proceso (thread o fork) para que realice la operación y cálculos de tiempos de acuerdo al algoritmo seleccionado y deberá de ser representado gráficamente el funcionamiento de cada algoritmo y mostrar en pantalla el procesamiento de extracción de datos.

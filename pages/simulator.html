@@ -35,7 +35,7 @@
   <div class="boot-header">
     <div class="boot-line">> SCHED_SIM // CPU SCHEDULER</div>
     <div class="boot-title">SIMULADOR<span class="prompt-blink"></span></div>
-    <div class="boot-sub">FCFS · SJN · RR · SRT · HRRN · MLFQ_1 · MLFQ_2</div>
+    <div class="boot-sub">FCFS · SJN · RR · SRT · HRRN · MLQ · MLFQ · PRIORITY</div>
   </div>
 
   <!-- TABS -->
@@ -45,8 +45,9 @@
     <button class="tab-btn" data-algo="rr">RR</button>
     <button class="tab-btn" data-algo="srt">SRT</button>
     <button class="tab-btn" data-algo="hrrn">HRRN</button>
-    <button class="tab-btn" data-algo="mlfq1">MLFQ_1</button>
-    <button class="tab-btn" data-algo="mlfq2">MLFQ_2</button>
+    <button class="tab-btn" data-algo="mlq">MLQ</button>
+    <button class="tab-btn" data-algo="mlfq">MLFQ</button>
+    <button class="tab-btn" data-algo="priority">PRIORITY</button>
   </div>
 
   <!-- ALGO EXPLAIN -->
@@ -85,15 +86,17 @@
       <div class="section-header">PROCESS TABLE</div>
       <div class="proc-table-wrap">
         <table class="ptable">
-          <thead><tr><th>PID</th><th>ARRIVAL</th><th>BURST</th><th>MEM (KB)</th><th></th></tr></thead>
+          <thead><tr><th>PID</th><th>ARRIVAL</th><th>BURST</th><th>MEM (KB)</th><th>PRIORITY</th><th>PAGES</th><th></th></tr></thead>
           <tbody id="proc-tbody">
             <!-- filas inyectadas por simulator.js -->
           </tbody>
         </table>
       </div>
       <div class="action-row">
-        <button class="btn btn-add" id="btn-add-proc" type="button">[ + PROCESS ]</button>
+        <button class="btn btn-add"   id="btn-add-proc"      type="button">[ + PROCESS ]</button>
         <button class="btn btn-amber" id="btn-load-scenario" type="button">[ ⌂ ESCENARIO ]</button>
+        <button class="btn btn-add"   id="btn-import-proc"   type="button">[ ↑ IMPORTAR ]</button>
+        <button class="btn btn-add"   id="btn-export-proc"   type="button">[ ↓ EXPORTAR ]</button>
       </div>
     </div>
     <div>
@@ -118,7 +121,12 @@
         <div class="config-row" id="cfg-quantum-row">
           <label>QUANTUM :</label>
           <input class="term-input" type="number" id="cfg-quantum" value="4" min="1" style="width:70px">
-          <span style="font-size:10px;color:var(--green-dim)">units</span>
+          <span style="font-size:14px;color:var(--green-dim)">units</span>
+        </div>
+        <div class="config-row" id="cfg-preemptive-row" style="display:none">
+          <label>MODO :</label>
+          <button class="btn btn-run" id="btn-preemptive" type="button" style="font-size:13px;padding:4px 10px">[ PRE ]</button>
+          <button class="btn btn-add" id="btn-nonpreemptive" type="button" style="font-size:13px;padding:4px 10px">[ NO-PRE ]</button>
         </div>
         <div class="info-block" style="margin-top:8px">
           <div><span class="cm">// Selector de algoritmo arriba</span></div>
@@ -158,7 +166,7 @@
         </div>
         <div style="display:flex;align-items:center;gap:4px;padding-left:146px">
           <span class="state-arrow" style="font-size:11px">↕</span>
-          <div class="state-node" data-state="blocked">BLOCKED</div>
+          <div class="state-node" data-state="waiting" title="Estado WAITING — disponible cuando se simulen I/O bursts (trabajo futuro)">WAITING</div>
         </div>
       </div>
     </div>
@@ -211,6 +219,16 @@
     <div class="placeholder" style="padding:20px 16px">Sin resultados aún.</div>
   </div>
 
+  <!-- COMPARISON -->
+  <div class="view-toggle" style="border-top:none">
+    <span>ANÁLISIS:</span>
+    <button class="btn btn-amber" id="btn-compare" type="button">[ ≡ COMPARAR ALGORITMOS ]</button>
+  </div>
+  <div id="compare-panel" style="display:none">
+    <div class="results-header" style="background:var(--surface)">COMPARACIÓN DE ALGORITMOS — mismos procesos, todos los schedulers</div>
+    <div id="compare-content" class="placeholder" style="padding:20px 16px">Presiona COMPARAR para ejecutar todos los algoritmos.</div>
+  </div>
+
   <!-- C CODE -->
   <div class="section-header">CÓDIGO C — IMPLEMENTACIÓN DE REFERENCIA</div>
   <div style="padding:0 16px 16px">
@@ -233,6 +251,8 @@
 <script src="../js/ui/gantt.js"></script>
 <script src="../js/ui/matrix.js"></script>
 <script src="../js/ui/memory-bar.js"></script>
+<script src="../js/ui/file-io.js"></script>
+<script src="../js/ui/compare.js"></script>
 <script src="../js/simulator.js"></script>
 </body>
 </html>

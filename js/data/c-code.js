@@ -113,7 +113,42 @@ window.SCHED.C_CODE = {
     }
 }`,
 
-  mlfq1: `<span class="cm">/* MLFQ_1 — Multi-Level Feedback Queue (degradación) */</span>
+  mlq: `<span class="cm">/* MLQ — Multilevel Queue (colas fijas por prioridad) */</span>
+<span class="ty">#define</span> LEVELS   <span class="nr">3</span>
+<span class="ty">int</span> quantums[LEVELS] = {<span class="nr">4</span>, <span class="nr">8</span>, <span class="nr">0</span>}; <span class="cm">/* Q0:RR q=4, Q1:RR q=8, Q2:FCFS */</span>
+
+<span class="ty">int</span> <span class="fn">assign_queue</span>(Process *p) {
+    <span class="kw">if</span> (p->priority <= <span class="nr">2</span>) <span class="kw">return</span> <span class="nr">0</span>;
+    <span class="kw">if</span> (p->priority <= <span class="nr">4</span>) <span class="kw">return</span> <span class="nr">1</span>;
+    <span class="kw">return</span> <span class="nr">2</span>;
+}
+
+<span class="ty">void</span> <span class="fn">mlq</span>(Process procs[], <span class="ty">int</span> n) {
+    Queue queues[LEVELS];
+    <span class="ty">int</span>   qlevel[<span class="nr">64</span>]; <span class="cm">/* cola fija, no cambia */</span>
+    <span class="ty">int</span>   qused [<span class="nr">64</span>] = {<span class="nr">0</span>};
+    <span class="ty">int</span> time = <span class="nr">0</span>, completed = <span class="nr">0</span>;
+    <span class="kw">while</span> (completed < n) {
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nr">0</span>; i < n; i++) {
+            <span class="kw">if</span> (procs[i].at == time) {
+                qlevel[i] = <span class="fn">assign_queue</span>(&procs[i]); <span class="cm">/* asignación fija */</span>
+                <span class="fn">enqueue</span>(queues[qlevel[i]], &procs[i]);
+            }
+        }
+        Process *p = <span class="fn">dequeue_highest</span>(queues, LEVELS);
+        <span class="kw">if</span> (!p) { time++; <span class="kw">continue</span>; }
+        <span class="ty">int</span> lv  = qlevel[p->pid];
+        <span class="ty">int</span> run = (quantums[lv] > <span class="nr">0</span>) ? <span class="fn">min</span>(quantums[lv] - qused[p->pid], p->remaining) : p->remaining;
+        p->remaining -= run; time += run; qused[p->pid] += run;
+        <span class="kw">if</span> (p->remaining == <span class="nr">0</span>) { <span class="fn">finish</span>(p, time); completed++; qused[p->pid] = <span class="nr">0</span>; }
+        <span class="kw">else if</span> (quantums[lv] > <span class="nr">0</span> && qused[p->pid] >= quantums[lv]) {
+            qused[p->pid] = <span class="nr">0</span>;
+            <span class="fn">enqueue</span>(queues[lv], p); <span class="cm">/* vuelve a su misma cola */</span>
+        } <span class="kw">else</span> { <span class="fn">enqueue</span>(queues[lv], p); }
+    }
+}`,
+
+  mlfq: `<span class="cm">/* MLFQ — Multi-Level Feedback Queue (degradación) */</span>
 <span class="ty">#define</span> LEVELS   <span class="nr">3</span>
 <span class="ty">int</span> quantums[LEVELS] = {<span class="nr">4</span>, <span class="nr">8</span>, <span class="nr">0</span>}; <span class="cm">/* 0 = FCFS */</span>
 
@@ -138,7 +173,7 @@ window.SCHED.C_CODE = {
     }
 }`,
 
-  mlfq2: `<span class="cm">/* MLFQ_2 — MLFQ con aging (anti-starvation) */</span>
+  mlfq: `<span class="cm">/* MLFQ — Multi-Level Feedback Queue con aging (anti-starvation) */</span>
 <span class="ty">#define</span> AGING_THRESHOLD <span class="nr">16</span> <span class="cm">/* ticks de espera antes de promover */</span>
 
 <span class="ty">void</span> <span class="fn">mlfq_aging</span>(Process procs[], <span class="ty">int</span> n) {

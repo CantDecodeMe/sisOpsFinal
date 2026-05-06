@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCHED_SIM // PAGINACIÓN DE MEMORIA</title>
+<link rel="stylesheet" href="../css/theme.css">
+<link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="../css/memory.css">
+</head>
+<body>
+
+<div id="tooltip"></div>
+
+<div class="crt-wrapper">
+<div class="shell">
+
+  <!-- TITLE BAR -->
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <div class="titlebar-dots"><span></span><span></span><span></span></div>
+      <a href="../index.html" style="color:inherit;text-decoration:none">SCHED_SIM</a> &nbsp;/&nbsp; MEMORIA
+    </div>
+    <div class="titlebar-right">
+      <button class="theme-toggle" id="theme-toggle-btn" type="button">[ ◐ LIGHT ]</button>
+      <span id="clock">--:--:--</span>
+    </div>
+  </div>
+
+  <!-- BOOT HEADER -->
+  <div class="boot-header">
+    <div class="boot-line">> SCHED_SIM // PAGINACIÓN DE MEMORIA</div>
+    <div class="boot-title">MEMORIA<span class="prompt-blink"></span></div>
+    <div class="boot-sub">FIFO · LRU · ÓPTIMO · CLOCK · SEGUNDA OPORTUNIDAD</div>
+  </div>
+
+  <!-- ALGO TABS -->
+  <div class="mem-algo-tabs" id="mem-algo-tabs">
+    <button class="mem-tab-btn active" data-algo="fifo">FIFO</button>
+    <button class="mem-tab-btn" data-algo="lru">LRU</button>
+    <button class="mem-tab-btn" data-algo="optimal">ÓPTIMO</button>
+    <button class="mem-tab-btn" data-algo="clock">CLOCK</button>
+    <button class="mem-tab-btn" data-algo="secondchance">2DA OPORT.</button>
+  </div>
+
+  <!-- ALGO DESCRIPTION -->
+  <div class="algo-explain" id="mem-algo-explain">
+    <strong>FIFO — First In First Out</strong>
+    <span class="tag tag-npre">REPLACEMENT</span><br>
+    Reemplaza la página que lleva más tiempo en memoria. Simple pero puede sufrir anomalía de Bélády.
+  </div>
+
+  <!-- CONFIG + INPUT -->
+  <div class="two-col">
+    <div>
+      <div class="section-header">CONFIGURACIÓN</div>
+      <div class="config-box">
+        <div class="config-row">
+          <label>MARCOS :</label>
+          <input class="term-input" type="number" id="cfg-frames" value="3" min="1" max="10" style="width:70px">
+          <span style="font-size:14px;color:var(--green-dim)">frames</span>
+        </div>
+        <div class="config-row">
+          <label>TAM. PÁGINA :</label>
+          <select class="term-select" id="cfg-pagesize">
+            <option value="4">4 KB</option>
+            <option value="8" selected>8 KB</option>
+            <option value="16">16 KB</option>
+          </select>
+        </div>
+        <div class="info-block" style="margin-top:8px">
+          <div><span class="kw">frames</span> = número de marcos en memoria física</div>
+          <div><span class="cm">// menor frames → más page faults</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-header">CADENA DE REFERENCIA</div>
+      <div class="config-box">
+        <div class="config-row" style="flex-direction:column;align-items:flex-start;gap:8px">
+          <label style="width:auto">Páginas (números separados por espacios):</label>
+          <input class="term-input" type="text" id="cfg-refstring" value="1 2 3 4 1 2 5 1 2 3 4 5"
+            style="width:100%;max-width:400px" placeholder="ej: 1 2 3 4 1 2 5 1 2 3 4 5">
+        </div>
+        <div class="action-row" style="padding:8px 0;border:none">
+          <button class="btn btn-run"   id="btn-simulate"   type="button">[ ▶ SIMULAR ]</button>
+          <button class="btn btn-amber" id="btn-random"     type="button">[ ↻ ALEATORIO ]</button>
+          <button class="btn btn-add"   id="btn-import-mem" type="button">[ ↑ IMPORTAR ]</button>
+          <button class="btn btn-add"   id="btn-export-mem" type="button">[ ↓ EXPORTAR ]</button>
+          <button class="btn btn-del"   id="btn-mem-reset"  type="button">[ ↺ RESET ]</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FRAMES VISUALIZATION -->
+  <div class="section-header">MARCOS DE PÁGINA</div>
+  <div class="frames-container" id="frames-container">
+    <span style="color:var(--green-dk);letter-spacing:2px;font-size:14px">// Presiona SIMULAR para visualizar</span>
+  </div>
+
+  <!-- STEP STATUS -->
+  <div class="step-status" id="step-status" style="display:none">
+    <span>REF: <strong id="step-ref" style="color:var(--green)">—</strong></span>
+    <span id="step-fault-badge"></span>
+    <span style="margin-left:auto;color:var(--green-dim)">PASO <span id="step-num">0</span> / <span id="step-total">0</span></span>
+  </div>
+
+  <!-- REFERENCE STRING DISPLAY -->
+  <div class="section-header">CADENA DE REFERENCIA</div>
+  <div class="ref-string-scroll">
+    <div class="ref-string-row" id="ref-string-display">
+      <span style="color:var(--green-dk);letter-spacing:2px;font-size:14px">// Sin datos</span>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="control-bar" id="mem-controls" style="display:none">
+    <div class="control-group">
+      <button class="btn btn-add" id="btn-step-back"  type="button">[ ◀ ANTERIOR ]</button>
+      <button class="btn btn-run" id="btn-step-fwd"   type="button">[ SIGUIENTE ▶ ]</button>
+      <button class="btn btn-amber" id="btn-auto"     type="button">[ ▶▶ AUTO ]</button>
+      <button class="btn btn-del" id="btn-stop-auto"  type="button">[ ❚❚ STOP ]</button>
+    </div>
+    <div class="control-group">
+      <span style="font-size:14px;color:var(--green-dim)">SPEED:</span>
+      <select class="term-select" id="mem-speed">
+        <option value="2000">0.5x</option>
+        <option value="1000" selected>1x</option>
+        <option value="500">2x</option>
+        <option value="200">5x</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="section-header">MÉTRICAS</div>
+  <div class="stats-row" id="mem-stats" style="min-height:80px">
+    <div class="stat-box"><div class="stat-lbl">TOTAL REFS</div><div class="stat-val" style="font-size:28px">—</div></div>
+    <div class="stat-box"><div class="stat-lbl">PAGE FAULTS</div><div class="stat-val" style="font-size:28px">—</div></div>
+    <div class="stat-box"><div class="stat-lbl">HIT RATE</div><div class="stat-val" style="font-size:28px">—</div><div class="stat-unit">%</div></div>
+    <div class="stat-box"><div class="stat-lbl">FAULT RATE</div><div class="stat-val" style="font-size:28px">—</div><div class="stat-unit">%</div></div>
+    <div class="stat-box"><div class="stat-lbl">FRAG. INTERNA</div><div class="stat-val" style="font-size:24px;color:var(--amber)">—</div><div class="stat-unit">KB libres</div></div>
+  </div>
+
+  <!-- STEP TABLE -->
+  <div class="section-header">TABLA DE PASOS</div>
+  <div class="step-table-wrap">
+    <div id="step-table-content" class="placeholder" style="padding:20px 16px">Sin datos aún.</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="corner-decor">
+    <span>└─[ SCHED_SIM // PAGINACIÓN DE MEMORIA ]</span>
+    <span>READY <span class="blink">█</span></span>
+  </div>
+
+</div><!-- /shell -->
+</div><!-- /crt-wrapper -->
+
+<script src="../js/ui/theme-toggle.js"></script>
+<script src="../js/ui/file-io.js"></script>
+<script src="../js/memory/algorithms/fifo-page.js"></script>
+<script src="../js/memory/algorithms/lru-page.js"></script>
+<script src="../js/memory/algorithms/optimal-page.js"></script>
+<script src="../js/memory/algorithms/clock-page.js"></script>
+<script src="../js/memory/algorithms/second-chance-page.js"></script>
+<script src="../js/ui/page-viz.js"></script>
+<script>
+'use strict';
+(function () {
+  var activeAlgo   = 'fifo';
+  var simResult    = null;
+  var currentStep  = -1;
+  var autoTimer    = null;
+  var numFrames    = 3;
+  var pageSize     = 8; // KB, reflects #cfg-pagesize
+
+  var ALGO_INFO = {
+    fifo:         { name: 'FIFO — First In First Out',          desc: 'Reemplaza la página que lleva más tiempo en memoria. Simple pero puede sufrir anomalía de Bélády.' },
+    lru:          { name: 'LRU — Least Recently Used',          desc: 'Reemplaza la página usada hace más tiempo. Aproxima el comportamiento óptimo. Requiere tracking de uso.' },
+    optimal:      { name: 'ÓPTIMO — Belady\'s Algorithm',       desc: 'Reemplaza la página que no será usada por más tiempo. Teóricamente óptimo, requiere conocer el futuro.' },
+    clock:        { name: 'CLOCK — Clock Algorithm',            desc: 'Marcos en anillo con bit de referencia. La manecilla avanza hasta encontrar un marco con bit = 0.' },
+    secondchance: { name: 'SEGUNDA OPORTUNIDAD — Second Chance', desc: 'FIFO + bit de referencia. Si una página tiene bit = 1 se le da una segunda oportunidad antes de expulsarla.' }
+  };
+
+  var ALGO_RUNNERS = {
+    fifo:         function (ref, f) { return FIFO_PAGE.run(ref, f); },
+    lru:          function (ref, f) { return LRU_PAGE.run(ref, f); },
+    optimal:      function (ref, f) { return OPTIMAL_PAGE.run(ref, f); },
+    clock:        function (ref, f) { return CLOCK_PAGE.run(ref, f); },
+    secondchance: function (ref, f) { return SECOND_CHANCE_PAGE.run(ref, f); }
+  };
+
+  function parseRefString() {
+    var raw = document.getElementById('cfg-refstring').value.trim();
+    return raw.split(/[\s,]+/).map(Number).filter(function (n) { return !isNaN(n) && n >= 0; });
+  }
+
+  function updateAlgoExplain() {
+    var info = ALGO_INFO[activeAlgo] || {};
+    document.getElementById('mem-algo-explain').innerHTML =
+      '<strong>' + info.name + '</strong> <span class="tag tag-npre">REPLACEMENT</span><br>' + info.desc;
+  }
+
+  function simulate() {
+    stopAuto();
+    var ref = parseRefString();
+    if (ref.length === 0) { alert('Ingresa una cadena de referencia válida.'); return; }
+    numFrames = Math.max(1, parseInt(document.getElementById('cfg-frames').value) || 3);
+    pageSize  = parseInt(document.getElementById('cfg-pagesize').value) || 8;
+
+    var runner = ALGO_RUNNERS[activeAlgo];
+    if (!runner) return;
+
+    simResult   = runner(ref, numFrames);
+    currentStep = 0;
+
+    document.getElementById('mem-controls').style.display = '';
+    document.getElementById('step-status').style.display  = '';
+    document.getElementById('step-total').textContent = simResult.steps.length;
+
+    renderStep(0);
+  }
+
+  function renderStep(idx) {
+    if (!simResult || idx < 0 || idx >= simResult.steps.length) return;
+    currentStep = idx;
+    var step    = simResult.steps[idx];
+
+    window.SCHED.pageViz.renderFrames('frames-container', step, numFrames);
+    window.SCHED.pageViz.renderRefString('ref-string-display', simResult.steps.map(function (s) { return s.ref; }), idx);
+    window.SCHED.pageViz.renderStepTable('step-table-content', simResult.steps, idx, numFrames);
+    window.SCHED.pageViz.renderStats('mem-stats', simResult, idx, numFrames, pageSize);
+
+    document.getElementById('step-ref').textContent = 'P' + step.ref;
+    document.getElementById('step-num').textContent  = idx + 1;
+    document.getElementById('step-fault-badge').innerHTML = step.fault
+      ? '<span class="fault-badge">PAGE FAULT</span>'
+      : '<span class="hit-badge">HIT</span>';
+  }
+
+  function stepBack()    { if (currentStep > 0)                              renderStep(currentStep - 1); }
+  function stepForward() { if (currentStep < simResult.steps.length - 1)    renderStep(currentStep + 1); else stopAuto(); }
+
+  function startAuto() {
+    stopAuto();
+    if (!simResult) return;
+    var delay = parseInt(document.getElementById('mem-speed').value) || 1000;
+    autoTimer = setInterval(function () {
+      if (currentStep >= simResult.steps.length - 1) { stopAuto(); return; }
+      stepForward();
+    }, delay);
+  }
+
+  function stopAuto() { clearInterval(autoTimer); autoTimer = null; }
+
+  function randomRefString() {
+    var len   = 12 + Math.floor(Math.random() * 8);
+    var pages = 6;
+    var arr   = [];
+    for (var i = 0; i < len; i++) arr.push(Math.floor(Math.random() * pages));
+    document.getElementById('cfg-refstring').value = arr.join(' ');
+  }
+
+  function importMem() {
+    window.SCHED.fileIO.openFilePicker('.txt,.csv', function (text) {
+      var parsed = window.SCHED.fileIO.parseMemText(text);
+      if (!parsed || parsed.refString.length === 0) {
+        alert('No se pudo leer el archivo.\nFormato esperado:\nMemoria=64\nPageSize=8\nFrames=3\n1 2 3 4 1 2 5...');
+        return;
+      }
+      document.getElementById('cfg-refstring').value = parsed.refString.join(' ');
+      if (parsed.frames) document.getElementById('cfg-frames').value = parsed.frames;
+      if (parsed.pageSize) {
+        var sel     = document.getElementById('cfg-pagesize');
+        var options = [4, 8, 16];
+        var closest = options.reduce(function (a, b) {
+          return Math.abs(b - parsed.pageSize) < Math.abs(a - parsed.pageSize) ? b : a;
+        });
+        sel.value = String(closest);
+      }
+      simulate();
+    });
+  }
+
+  function exportMem() {
+    if (!simResult || !simResult.steps || simResult.steps.length === 0) {
+      alert('Ejecuta una simulación primero.'); return;
+    }
+    var frameHeaders = [];
+    for (var f = 0; f < numFrames; f++) frameHeaders.push('Frame' + f);
+    var headers = ['Paso', 'Referencia'].concat(frameHeaders).concat(['Fault', 'Evicted']);
+    var rows = simResult.steps.map(function (s, i) {
+      var row = [i + 1, 'P' + s.ref];
+      for (var f = 0; f < numFrames; f++) row.push(s.frames[f] !== null ? 'P' + s.frames[f] : '—');
+      row.push(s.fault ? 'FAULT' : 'HIT');
+      row.push(s.evicted !== null && s.evicted !== undefined ? 'P' + s.evicted : '—');
+      return row;
+    });
+    rows.push([]);
+    rows.push(['TOTAL FAULTS', simResult.faults, '', '', '', '', '']);
+    rows.push(['HIT RATE', ((simResult.hits / simResult.steps.length) * 100).toFixed(1) + '%', '', '', '', '', '']);
+    window.SCHED.fileIO.download('memoria-faults-' + activeAlgo + '.csv', window.SCHED.fileIO.toCSV(headers, rows));
+  }
+
+  function reset() {
+    stopAuto();
+    simResult   = null;
+    currentStep = -1;
+    document.getElementById('frames-container').innerHTML =
+      '<span style="color:var(--green-dk);letter-spacing:2px;font-size:14px">// Presiona SIMULAR para visualizar</span>';
+    document.getElementById('ref-string-display').innerHTML =
+      '<span style="color:var(--green-dk);letter-spacing:2px;font-size:14px">// Sin datos</span>';
+    document.getElementById('step-table-content').innerHTML = '<div class="placeholder" style="padding:20px 16px">Sin datos aún.</div>';
+    document.getElementById('mem-controls').style.display  = 'none';
+    document.getElementById('step-status').style.display   = 'none';
+    document.getElementById('mem-stats').innerHTML =
+      '<div class="stat-box"><div class="stat-lbl">TOTAL REFS</div><div class="stat-val" style="font-size:28px">—</div></div>' +
+      '<div class="stat-box"><div class="stat-lbl">PAGE FAULTS</div><div class="stat-val" style="font-size:28px">—</div></div>' +
+      '<div class="stat-box"><div class="stat-lbl">HIT RATE</div><div class="stat-val" style="font-size:28px">—</div><div class="stat-unit">%</div></div>' +
+      '<div class="stat-box"><div class="stat-lbl">FAULT RATE</div><div class="stat-val" style="font-size:28px">—</div><div class="stat-unit">%</div></div>';
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // Algo tabs
+    document.querySelectorAll('.mem-tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.mem-tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        activeAlgo = btn.dataset.algo;
+        updateAlgoExplain();
+        reset();
+      });
+    });
+
+    document.getElementById('btn-simulate').addEventListener('click',   simulate);
+    document.getElementById('btn-random').addEventListener('click',     randomRefString);
+    document.getElementById('btn-import-mem').addEventListener('click', importMem);
+    document.getElementById('btn-export-mem').addEventListener('click', exportMem);
+    document.getElementById('btn-mem-reset').addEventListener('click',  reset);
+    document.getElementById('btn-step-back').addEventListener('click', stepBack);
+    document.getElementById('btn-step-fwd').addEventListener('click',  stepForward);
+    document.getElementById('btn-auto').addEventListener('click',      startAuto);
+    document.getElementById('btn-stop-auto').addEventListener('click', stopAuto);
+
+    updateAlgoExplain();
+  });
+})();
+</script>
+</body>
+</html>
