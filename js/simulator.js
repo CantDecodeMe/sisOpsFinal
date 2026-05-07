@@ -525,6 +525,7 @@
       statBox('THROUGHPUT',  summary.throughput.toFixed(3), 'p/t') +
       statBox('AVG TAT',     summary.avgTAT.toFixed(2),     'ticks') +
       statBox('AVG WAIT',    summary.avgWT.toFixed(2),      'ticks') +
+      statBox('CTX SWITCH',  (summary.contextSwitches || 0).toFixed(0), 'switches') +
       '</div>';
 
     document.getElementById('results-wrap').innerHTML = html;

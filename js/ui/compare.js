@@ -48,6 +48,7 @@ window.SCHED.compare = (function () {
       '<th>AVG TAT</th>' +
       '<th>AVG RESP</th>' +
       '<th>CPU UTIL %</th>' +
+      '<th>CTX SW</th>' +
       '</tr></thead><tbody>';
 
     algos.forEach(function (a) {
@@ -65,6 +66,7 @@ window.SCHED.compare = (function () {
           '<span class="' + (r.cpuUtil >= 90 ? 'td-hl' : r.cpuUtil >= 70 ? 'td-amber' : 'td-red') + '">' +
           r.cpuUtil.toFixed(1) + '%</span>' +
         '</td>' +
+        '<td style="text-align:center;color:var(--green-dim)">' + (r.contextSwitches || 0) + '</td>' +
         '</tr>';
     });
 
@@ -172,16 +174,17 @@ window.SCHED.compare = (function () {
   }
 
   function exportComparison(algos, results) {
-    var headers = ['Algoritmo', 'AvgWaitTime', 'AvgTAT', 'AvgResponseTime', 'CPUUtil%'];
+    var headers = ['Algoritmo', 'AvgWaitTime', 'AvgTAT', 'AvgResponseTime', 'CPUUtil%', 'ContextSwitches'];
     var rows    = algos.map(function (a) {
       var r = results[a];
-      if (!r) return [ALGO_LABELS[a] || a, 'ERROR', '', '', ''];
+      if (!r) return [ALGO_LABELS[a] || a, 'ERROR', '', '', '', ''];
       return [
         ALGO_LABELS[a] || a,
         r.avgWT.toFixed(2),
         r.avgTAT.toFixed(2),
         r.avgRT.toFixed(2),
-        r.cpuUtil.toFixed(1)
+        r.cpuUtil.toFixed(1),
+        r.contextSwitches || 0
       ];
     });
     window.SCHED.fileIO.download('comparacion-algoritmos.csv', window.SCHED.fileIO.toCSV(headers, rows));

@@ -95,6 +95,19 @@ var SCHED_UTILS = (function () {
     };
   }
 
+  function countContextSwitches(ticks, numCores) {
+    var switches = 0;
+    var prevPids = new Array(numCores).fill(null);
+    ticks.forEach(function (tick) {
+      for (var c = 0; c < numCores; c++) {
+        var cur = tick.cores[c] ? tick.cores[c].pid : null;
+        if (prevPids[c] !== null && cur !== prevPids[c]) switches++;
+        prevPids[c] = cur;
+      }
+    });
+    return switches;
+  }
+
   function buildFinalResult(ticks, procs, firstRun, numCores) {
     var done = procs.filter(function (p) { return p.ct !== null; });
     var mr = calcMetrics(done, firstRun);
@@ -108,7 +121,8 @@ var SCHED_UTILS = (function () {
       summary: {
         avgTAT: mr.avgTAT, avgWT: mr.avgWT, avgRT: mr.avgRT,
         cpuUtil: cpuUtil,
-        throughput: done.length / (ticks.length || 1)
+        throughput: done.length / (ticks.length || 1),
+        contextSwitches: countContextSwitches(ticks, numCores)
       }
     };
   }

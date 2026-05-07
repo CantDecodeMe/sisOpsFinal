@@ -6,6 +6,7 @@
 <title>SCHED_SIM // PAGINACIÓN DE MEMORIA</title>
 <link rel="stylesheet" href="../css/theme.css">
 <link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="../css/simulator.css">
 <link rel="stylesheet" href="../css/memory.css">
 </head>
 <body>
@@ -147,6 +148,16 @@
   <div class="section-header">TABLA DE PASOS</div>
   <div class="step-table-wrap">
     <div id="step-table-content" class="placeholder" style="padding:20px 16px">Sin datos aún.</div>
+  </div>
+
+  <!-- COMPARISON -->
+  <div class="view-toggle" style="border-top:1px solid var(--border)">
+    <span>ANÁLISIS:</span>
+    <button class="btn btn-amber" id="btn-mem-compare" type="button">[ ≡ COMPARAR ALGORITMOS ]</button>
+  </div>
+  <div id="mem-compare-panel" style="display:none">
+    <div class="results-header" style="background:var(--surface)">COMPARACIÓN — misma cadena de referencia, todos los algoritmos</div>
+    <div id="mem-compare-content" class="placeholder" style="padding:20px 16px">Presiona COMPARAR para ejecutar todos los algoritmos.</div>
   </div>
 
   <!-- FOOTER -->
@@ -322,6 +333,140 @@
       '<div class="stat-box"><div class="stat-lbl">FAULT RATE</div><div class="stat-val" style="font-size:28px">—</div><div class="stat-unit">%</div></div>';
   }
 
+  // ── Comparación de algoritmos de paginación ───────────────────────────
+  var PAGE_ALGO_LABELS = {
+    fifo: 'FIFO', lru: 'LRU', optimal: 'ÓPTIMO',
+    clock: 'CLOCK', secondchance: '2DA OPORT.'
+  };
+  var PAGE_ALGO_ORDER = ['fifo', 'lru', 'optimal', 'clock', 'secondchance'];
+
+  function runPageComparison() {
+    var ref = parseRefString();
+    if (ref.length === 0) { alert('Ingresa una cadena de referencia válida primero.'); return; }
+    var frames = Math.max(1, parseInt(document.getElementById('cfg-frames').value) || 3);
+
+    var panel = document.getElementById('mem-compare-panel');
+    panel.style.display = '';
+
+    var results = {};
+    PAGE_ALGO_ORDER.forEach(function (a) {
+      results[a] = ALGO_RUNNERS[a](ref, frames);
+    });
+
+    renderPageComparison(results, ref.length, frames);
+  }
+
+  function renderPageComparison(results, totalRefs, frames) {
+    var container = document.getElementById('mem-compare-content');
+
+    var maxFaults = 0;
+    PAGE_ALGO_ORDER.forEach(function (a) {
+      if (results[a].faults > maxFaults) maxFaults = results[a].faults;
+    });
+
+    var bestAlgo = PAGE_ALGO_ORDER.reduce(function (best, a) {
+      return results[a].faults < results[best].faults ? a : best;
+    });
+
+    var html = '<table class="rtable"><thead><tr>' +
+      '<th>ALGORITMO</th><th>PAGE FAULTS</th><th>HIT RATE</th><th>FAULT RATE</th>' +
+      '</tr></thead><tbody>';
+
+    PAGE_ALGO_ORDER.forEach(function (a) {
+      var r        = results[a];
+      var hitRate  = ((r.hits  / totalRefs) * 100).toFixed(1);
+      var faultRate = ((r.faults / totalRefs) * 100).toFixed(1);
+      var isBest   = (a === bestAlgo);
+      var barPct   = maxFaults > 0 ? (r.faults / maxFaults * 100).toFixed(1) : '0';
+
+      html += '<tr style="' + (isBest ? 'background:var(--green-xs)' : '') + '">' +
+        '<td><span style="color:' + (isBest ? 'var(--green)' : 'var(--green-dim)') + '">' +
+          (isBest ? '★ ' : '') + PAGE_ALGO_LABELS[a] + '</span></td>' +
+        '<td><div style="display:flex;align-items:center;gap:8px">' +
+          '<span style="min-width:28px;text-align:right">' + r.faults + '</span>' +
+          '<div style="flex:1;height:14px;background:var(--surface2);border:1px solid var(--border)">' +
+            '<div style="width:' + barPct + '%;height:100%;background:' + (isBest ? '#00ff41' : '#ff3131') + ';transition:width 0.4s"></div>' +
+          '</div></div></td>' +
+        '<td class="' + (parseFloat(hitRate)   >= 50 ? 'td-hl'    : '') + '">' + hitRate   + '%</td>' +
+        '<td class="' + (parseFloat(faultRate) >= 50 ? 'td-amber' : '') + '">' + faultRate + '%</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table>';
+    html += renderPageCompareChart(results, bestAlgo, totalRefs, frames);
+    html += '<div style="padding:8px 16px;font-size:14px;color:var(--green-dim);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">' +
+      '<span>★ = menor número de page faults &nbsp;|&nbsp; <strong>' + totalRefs + '</strong> refs · <strong>' + frames + '</strong> marcos</span>' +
+      '<button class="btn btn-add" style="font-size:13px;padding:3px 10px" id="btn-export-page-compare">[ ↓ EXPORTAR ]</button>' +
+      '</div>';
+
+    container.innerHTML = html;
+
+    document.getElementById('btn-export-page-compare').addEventListener('click', function () {
+      exportPageComparison(results, totalRefs);
+    });
+  }
+
+  function renderPageCompareChart(results, bestAlgo, totalRefs, frames) {
+    var W = 580, H = 210;
+    var pad = { top: 28, right: 16, bottom: 48, left: 44 };
+    var plotW = W - pad.left - pad.right;
+    var plotH = H - pad.top - pad.bottom;
+
+    var maxFaults = 0;
+    PAGE_ALGO_ORDER.forEach(function (a) {
+      if (results[a].faults > maxFaults) maxFaults = results[a].faults;
+    });
+    var yMax = Math.max(Math.ceil(maxFaults * 1.2), 2);
+    var groupW = plotW / PAGE_ALGO_ORDER.length;
+    var barW   = groupW - 14;
+
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-width:' + W + 'px;height:auto;display:block;margin:12px auto 4px" xmlns="http://www.w3.org/2000/svg">';
+
+    svg += '<text x="' + (W / 2) + '" y="16" text-anchor="middle" fill="var(--green)" font-size="12" font-family="VT323,monospace" letter-spacing="3">PAGE FAULTS — ' + totalRefs + ' REFS · ' + frames + ' MARCOS</text>';
+
+    for (var t = 0; t <= 4; t++) {
+      var y   = pad.top + plotH - (t / 4) * plotH;
+      var lbl = Math.round((t / 4) * yMax);
+      svg += '<line x1="' + pad.left + '" y1="' + y + '" x2="' + (pad.left + plotW) + '" y2="' + y + '" stroke="var(--border)" stroke-dasharray="2,3" stroke-width="1"/>';
+      svg += '<text x="' + (pad.left - 6) + '" y="' + (y + 4) + '" text-anchor="end" fill="var(--green-dim)" font-size="11" font-family="monospace">' + lbl + '</text>';
+    }
+
+    PAGE_ALGO_ORDER.forEach(function (a, idx) {
+      var r      = results[a];
+      var isBest = (a === bestAlgo);
+      var h      = yMax > 0 ? (r.faults / yMax) * plotH : 0;
+      var x      = pad.left + idx * groupW + 7;
+      var y      = pad.top + plotH - h;
+
+      svg += '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + h + '" fill="' + (isBest ? '#00ff41' : '#ff3131') + '" opacity="0.85"><title>' + PAGE_ALGO_LABELS[a] + ': ' + r.faults + ' faults</title></rect>';
+      if (h > 16) {
+        svg += '<text x="' + (x + barW / 2) + '" y="' + (y + 14) + '" text-anchor="middle" fill="#000" font-size="11" font-family="monospace" font-weight="bold">' + r.faults + '</text>';
+      }
+      svg += '<text x="' + (x + barW / 2) + '" y="' + (pad.top + plotH + 16) + '" text-anchor="middle" fill="' + (isBest ? 'var(--green)' : 'var(--green-dim)') + '" font-size="11" font-family="VT323,monospace" letter-spacing="1">' + (isBest ? '★ ' : '') + PAGE_ALGO_LABELS[a] + '</text>';
+    });
+
+    svg += '<line x1="' + pad.left + '" y1="' + (pad.top + plotH) + '" x2="' + (pad.left + plotW) + '" y2="' + (pad.top + plotH) + '" stroke="var(--green-dim)" stroke-width="1.5"/>';
+    svg += '<line x1="' + pad.left + '" y1="' + pad.top + '" x2="' + pad.left + '" y2="' + (pad.top + plotH) + '" stroke="var(--green-dim)" stroke-width="1.5"/>';
+    svg += '</svg>';
+
+    return '<div style="background:var(--surface);border-top:1px solid var(--border);padding:6px 16px">' + svg + '</div>';
+  }
+
+  function exportPageComparison(results, totalRefs) {
+    var headers = ['Algoritmo', 'PageFaults', 'Hits', 'HitRate%', 'FaultRate%'];
+    var rows = PAGE_ALGO_ORDER.map(function (a) {
+      var r = results[a];
+      return [
+        PAGE_ALGO_LABELS[a],
+        r.faults,
+        r.hits,
+        ((r.hits  / totalRefs) * 100).toFixed(1),
+        ((r.faults / totalRefs) * 100).toFixed(1)
+      ];
+    });
+    window.SCHED.fileIO.download('comparacion-paginacion.csv', window.SCHED.fileIO.toCSV(headers, rows));
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     // Algo tabs
     document.querySelectorAll('.mem-tab-btn').forEach(function (btn) {
@@ -343,6 +488,7 @@
     document.getElementById('btn-step-fwd').addEventListener('click',  stepForward);
     document.getElementById('btn-auto').addEventListener('click',      startAuto);
     document.getElementById('btn-stop-auto').addEventListener('click', stopAuto);
+    document.getElementById('btn-mem-compare').addEventListener('click', runPageComparison);
 
     updateAlgoExplain();
   });
