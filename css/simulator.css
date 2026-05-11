@@ -315,8 +315,8 @@ table.matrix-table td.mx-cell:hover { filter: brightness(1.5); z-index: 5; }
     45deg,
     transparent,
     transparent 2px,
-    rgba(0,255,65,0.06) 2px,
-    rgba(0,255,65,0.06) 4px
+    rgba(0,229,255,0.06) 2px,
+    rgba(0,229,255,0.06) 4px
   );
   border-left: 1px solid var(--border) !important;
 }
@@ -482,13 +482,13 @@ table.rtable tr.avg-row td {
 .state-node[data-state="running"].active {
   background: var(--green);
   border-color: var(--green);
-  box-shadow: 0 0 8px #00ff4199, 0 0 18px #00ff4144;
+  box-shadow: 0 0 8px #00e5ff99, 0 0 18px #00e5ff44;
 }
 
 .state-node[data-state="waiting"].active {
   background: var(--red);
   border-color: var(--red);
-  box-shadow: 0 0 8px #ff313199, 0 0 18px #ff313144;
+  box-shadow: 0 0 8px #ff2d9d99, 0 0 18px #ff2d9d44;
 }
 
 .state-node[data-state="terminated"].active {
@@ -536,8 +536,8 @@ table.rtable tr.avg-row td {
     45deg,
     transparent,
     transparent 4px,
-    rgba(0,255,65,0.05) 4px,
-    rgba(0,255,65,0.05) 8px
+    rgba(0,229,255,0.05) 4px,
+    rgba(0,229,255,0.05) 8px
   );
   color: var(--green-dk);
 }

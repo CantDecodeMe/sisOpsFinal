@@ -7,47 +7,53 @@
 
 /* ─── DARK THEME (default) ──────────────────────────────── */
 :root {
-  --black:    #000000;
-  --bg:       #050a05;
-  --surface:  #080f08;
-  --surface2: #0a150a;
-  --green:    #00ff41;
-  --green-dim:#00aa2a;
-  --green-dk: #004d12;
-  --green-xs: #001a06;
+  --black:    #08080f;
+  --bg:       #0a0a15;
+  --surface:  #0d0d1c;
+  --surface2: #121228;
+  --green:    #00e5ff;
+  --green-dim:#00aacc;
+  --green-dk: #003d55;
+  --green-xs: #001525;
   --amber:    #ffb700;
-  --red:      #ff3131;
-  --white:    #ccffcc;
-  --border:   #00ff4133;
-  --border2:  #00ff4166;
-  --glow:     0 0 8px #00ff4188, 0 0 20px #00ff4133;
-  --glow-sm:  0 0 4px #00ff4166;
+  --red:      #ff2d9d;
+  --pink:     #ff2d9d;
+  --white:    #ccf0ff;
+  --border:   #00e5ff33;
+  --border2:  #00e5ff66;
+  --border-pink: #ff2d9d66;
+  --glow:     0 0 8px #00e5ff88, 0 0 20px #00e5ff33;
+  --glow-sm:  0 0 4px #00e5ff66;
+  --glow-pink: 0 0 8px #ff2d9d88, 0 0 20px #ff2d9d33;
   --font:     'Share Tech Mono', monospace;
   --font-vt:  'VT323', monospace;
 
   /* Estos se usan en simulator.css para diferenciar paneles */
   --panel-bg: var(--bg);
-  --crt-opacity: 0.18;
+  --crt-opacity: 0.15;
 }
 
 /* ─── LIGHT THEME ──────────────────────────────────────── */
 :root[data-theme="light"] {
-  --black:    #f5f5f0;
+  --black:    #f0f4f8;
   --bg:       #ffffff;
-  --surface:  #f0f0e8;
-  --surface2: #e8e8e0;
-  --green:    #007a1e;
-  --green-dim:#005f17;
-  --green-dk: #00420f;
-  --green-xs: #d8e8d8;
+  --surface:  #eaf4f8;
+  --surface2: #d8edf5;
+  --green:    #0077aa;
+  --green-dim:#005577;
+  --green-dk: #003d55;
+  --green-xs: #d0eaf5;
   --amber:    #b87000;
-  --red:      #c12020;
-  --white:    #2a2a2a;
-  --border:   #007a1e44;
-  --border2:  #007a1e88;
-  --glow:     0 1px 3px #00000022, 0 0 1px #007a1e44;
+  --red:      #cc1177;
+  --pink:     #cc1177;
+  --white:    #1a2a33;
+  --border:   #0077aa44;
+  --border2:  #0077aa88;
+  --border-pink: #cc117766;
+  --glow:     0 1px 3px #00000022, 0 0 1px #0077aa44;
   --glow-sm:  0 1px 2px #00000022;
-  --panel-bg: #fafaf5;
+  --glow-pink: 0 1px 2px #cc117722;
+  --panel-bg: #f5fbff;
   --crt-opacity: 0;
 }
 
@@ -129,6 +135,8 @@ body::before {
 .crt-wrapper {
   animation: flicker 8s infinite;
   min-height: 100vh;
+  border: 1px solid var(--border-pink);
+  box-shadow: 0 0 18px var(--border-pink), inset 0 0 30px rgba(255,45,157,0.03);
 }
 
 :root[data-theme="light"] .crt-wrapper { animation: none; }
@@ -137,7 +145,7 @@ body::before {
 ::-webkit-scrollbar { width: 8px; height: 8px; background: var(--black); }
 ::-webkit-scrollbar-thumb {
   background: var(--green-dk);
-  border: 1px solid var(--green-dim);
+  border: 1px solid var(--border-pink);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--green-dim); }
 
