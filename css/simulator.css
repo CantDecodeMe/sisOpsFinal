@@ -439,15 +439,118 @@ table.rtable tr.avg-row td {
   letter-spacing: 1px;
 }
 
-/* ─── STATE DIAGRAM (placeholder hasta Fase 6) ───────── */
+/* ─── STATE DIAGRAM ──────────────────────────────────── */
 .state-diagram {
-  padding: 16px;
-  min-height: 200px;
   background: var(--bg);
   border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 10px 12px 6px;
+  min-height: 200px;
+}
+
+/* SVG diagram */
+.state-svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+/* Arrow lines and paths */
+.sv-arrow path,
+.sv-arrow line {
+  fill: none;
+  stroke: var(--green-dk);
+  stroke-width: 1;
+}
+
+.sv-arr-head {
+  fill: var(--green-dk);
+}
+
+/* Arrow labels */
+.sv-arrow text {
+  fill: var(--green-dk);
+  font-size: 8.5px;
+  font-family: var(--font);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+/* State nodes — default */
+.sv-node rect {
+  fill: var(--surface2);
+  stroke: var(--green-dk);
+  stroke-width: 1;
+  transition: fill 0.2s, stroke 0.2s, filter 0.2s;
+}
+
+.sv-lbl {
+  fill: var(--green-dk);
+  font-size: 10px;
+  font-family: var(--font);
+  text-anchor: middle;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  transition: fill 0.2s;
+  pointer-events: none;
+}
+
+.sv-sub {
+  fill: var(--green-dk);
+  font-size: 7.5px;
+  font-family: var(--font);
+  text-anchor: middle;
+  letter-spacing: 0.5px;
+  opacity: 0.6;
+  transition: fill 0.2s, opacity 0.2s;
+  pointer-events: none;
+}
+
+/* Active state nodes — per-state color */
+.sv-node.active rect {
+  stroke-width: 1.5;
+}
+
+.sv-node.active .sv-lbl {
+  fill: #000;
+  font-weight: bold;
+}
+
+.sv-node.active .sv-sub {
+  fill: #000;
+  opacity: 0.75;
+}
+
+.sv-node[data-state="new"].active rect {
+  fill: #4db8ff;
+  stroke: #4db8ff;
+  filter: drop-shadow(0 0 5px #4db8ffaa);
+}
+.sv-node[data-state="ready"].active rect {
+  fill: #ffb700;
+  stroke: #ffb700;
+  filter: drop-shadow(0 0 5px #ffb700aa);
+}
+.sv-node[data-state="running"].active rect {
+  fill: #00e5ff;
+  stroke: #00e5ff;
+  filter: drop-shadow(0 0 5px #00e5ffaa);
+  animation: svPulse 1.4s ease-in-out infinite;
+}
+.sv-node[data-state="waiting"].active rect {
+  fill: #ff2d9d;
+  stroke: #ff2d9d;
+  filter: drop-shadow(0 0 5px #ff2d9daa);
+  animation: svPulse 1.4s ease-in-out infinite;
+}
+.sv-node[data-state="terminated"].active rect {
+  fill: #cc55ff;
+  stroke: #cc55ff;
+  filter: drop-shadow(0 0 5px #cc55ffaa);
+}
+
+@keyframes svPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.72; }
 }
 
 .state-node {

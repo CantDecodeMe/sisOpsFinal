@@ -160,21 +160,69 @@
       </div>
     </div>
     <div>
-      <div class="section-header">ESTADOS DE PROCESO</div>
-      <div class="state-diagram" id="state-diagram" style="flex-direction:column;align-items:flex-start;justify-content:center;gap:8px">
-        <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
-          <div class="state-node" data-state="new">NEW</div>
-          <span class="state-arrow">→</span>
-          <div class="state-node" data-state="ready">READY</div>
-          <span class="state-arrow">⇌</span>
-          <div class="state-node" data-state="running">RUNNING</div>
-          <span class="state-arrow">→</span>
-          <div class="state-node" data-state="terminated">TERMINATED</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:4px;padding-left:146px">
-          <span class="state-arrow" style="font-size:11px">↕</span>
-          <div class="state-node" data-state="waiting" title="Estado WAITING — disponible cuando se simulen I/O bursts (trabajo futuro)">WAITING</div>
-        </div>
+      <div class="section-header">DIAGRAMA DE ESTADOS</div>
+      <div class="state-diagram" id="state-diagram">
+        <svg viewBox="0 0 540 265" width="100%" class="state-svg" id="state-svg" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="sv-arr" viewBox="0 0 8 6" refX="8" refY="3"
+                    markerWidth="8" markerHeight="6" markerUnits="userSpaceOnUse" orient="auto">
+              <path d="M 0 0 L 8 3 L 0 6 Z" class="sv-arr-head"/>
+            </marker>
+          </defs>
+
+          <!-- ── FLECHAS (se dibujan primero para quedar detrás de los nodos) ── -->
+          <g class="sv-arrow" id="sa-arrival">
+            <path d="M 75,52 L 75,118" marker-end="url(#sv-arr)"/>
+            <text x="82" y="88">arrival</text>
+          </g>
+          <g class="sv-arrow" id="sa-dispatch">
+            <path d="M 120,131 L 210,131" marker-end="url(#sv-arr)"/>
+            <text x="137" y="125">dispatch</text>
+          </g>
+          <g class="sv-arrow" id="sa-preempt">
+            <path d="M 210,147 Q 163,170 120,147" marker-end="url(#sv-arr)"/>
+            <text x="135" y="172">preempt / quantum</text>
+          </g>
+          <g class="sv-arrow" id="sa-exit">
+            <path d="M 320,137 L 395,137" marker-end="url(#sv-arr)"/>
+            <text x="328" y="130">exit()</text>
+          </g>
+          <g class="sv-arrow" id="sa-io-req">
+            <path d="M 265,156 L 265,207" marker-end="url(#sv-arr)"/>
+            <text x="271" y="185">I/O req</text>
+          </g>
+          <g class="sv-arrow" id="sa-io-done">
+            <path d="M 210,226 H 18 V 137 H 30" marker-end="url(#sv-arr)"/>
+            <text x="36" y="249">I/O done</text>
+          </g>
+
+          <!-- ── NODOS ── -->
+          <g class="sv-node" data-state="new" id="sn-new">
+            <rect x="30" y="14" width="90" height="38" rx="2"/>
+            <text class="sv-lbl" x="75" y="30">NEW</text>
+            <text class="sv-sub" x="75" y="44">por llegar</text>
+          </g>
+          <g class="sv-node" data-state="ready" id="sn-ready">
+            <rect x="30" y="118" width="90" height="38" rx="2"/>
+            <text class="sv-lbl" x="75" y="134">READY</text>
+            <text class="sv-sub" x="75" y="148">en cola</text>
+          </g>
+          <g class="sv-node" data-state="running" id="sn-running">
+            <rect x="210" y="118" width="110" height="38" rx="2"/>
+            <text class="sv-lbl" x="265" y="134">RUNNING</text>
+            <text class="sv-sub" x="265" y="148">ejecutando</text>
+          </g>
+          <g class="sv-node" data-state="terminated" id="sn-terminated">
+            <rect x="395" y="118" width="130" height="38" rx="2"/>
+            <text class="sv-lbl" x="460" y="134">TERMINATED</text>
+            <text class="sv-sub" x="460" y="148">completado</text>
+          </g>
+          <g class="sv-node" data-state="waiting" id="sn-waiting">
+            <rect x="210" y="207" width="110" height="38" rx="2"/>
+            <text class="sv-lbl" x="265" y="223">WAITING</text>
+            <text class="sv-sub" x="265" y="237">bloqueado / I/O</text>
+          </g>
+        </svg>
       </div>
     </div>
   </div>

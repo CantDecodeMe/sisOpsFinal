@@ -338,8 +338,8 @@
   function updateStateDiagram(tick, isDone) {
     var hasRunning = (tick.cores || []).some(function (s) { return s !== null; });
     var hasReady   = (tick.queue || []).length > 0;
-    document.querySelectorAll('.state-node').forEach(function (n) {
-      var state = n.dataset.state || n.textContent.trim().toLowerCase();
+    document.querySelectorAll('.sv-node, .state-node').forEach(function (n) {
+      var state = n.dataset.state;
       n.classList.remove('active');
       if (state === 'running'    && hasRunning) n.classList.add('active');
       if (state === 'ready'      && hasReady)   n.classList.add('active');
@@ -609,7 +609,7 @@
     updateCoreLeds();
     resetQueueDisplay();
     resetProcStatusPanel();
-    document.querySelectorAll('.state-node').forEach(function (n) { n.classList.remove('active'); });
+    document.querySelectorAll('.sv-node, .state-node').forEach(function (n) { n.classList.remove('active'); });
     document.getElementById('results-wrap').innerHTML =
       '<div class="results-header">PROCESS METRICS TABLE</div>' +
       '<div class="placeholder" style="padding:20px 16px">Sin resultados aún.</div>';
