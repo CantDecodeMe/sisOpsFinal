@@ -11,6 +11,7 @@
 <body>
 
 <div id="tooltip"></div>
+<div id="toast-container"></div>
 
 <div class="crt-wrapper">
 <div class="shell">
@@ -137,12 +138,18 @@
     </div>
   </div>
 
+  <!-- PROCESS STATUS PANEL -->
+  <div class="section-header">ESTADO DE PROCESOS</div>
+  <div class="proc-status-wrap" id="proc-status-wrap">
+    <div class="placeholder">Ejecuta la simulación para ver el estado en tiempo real de cada proceso.</div>
+  </div>
+
   <!-- QUEUE VIZ + STATE DIAGRAM -->
   <div class="two-col">
     <div>
-      <div class="section-header">COLA DE LISTOS</div>
+      <div class="section-header">CORES Y COLA</div>
       <div class="viz-container" id="viz-container" style="padding:14px 16px">
-        <div style="font-size:9px;letter-spacing:2px;color:var(--green-dim);margin-bottom:6px">&gt; EXECUTING</div>
+        <div style="font-size:9px;letter-spacing:2px;color:var(--green-dim);margin-bottom:6px">&gt; CORES ACTIVOS</div>
         <div id="running-display" style="display:flex;flex-wrap:wrap;gap:5px;min-height:26px;align-items:flex-start;margin-bottom:14px">
           <span style="font-size:10px;color:var(--green-dk)">—</span>
         </div>
@@ -245,6 +252,7 @@
 </div><!-- /crt-wrapper -->
 
 <script src="../js/ui/theme-toggle.js"></script>
+<script src="../js/ui/toast.js"></script>
 <script src="../js/scheduler/scheduler-utils.js"></script>
 <script src="../js/data/scenarios.js"></script>
 <script src="../js/data/c-code.js"></script>

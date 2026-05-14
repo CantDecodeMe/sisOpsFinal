@@ -97,7 +97,25 @@
       var el = e.target;
       if (!el.dataset.pid) return;
       var proc = processes.find(function (p) { return p.pid === el.dataset.pid; });
-      if (proc) proc[el.dataset.field] = Math.max(0, parseInt(el.value) || 0);
+      if (!proc) return;
+      var val = Math.max(0, parseInt(el.value, 10) || 0);
+      proc[el.dataset.field] = val;
+
+      if (el.dataset.field === 'burst') {
+        if (val < 1) {
+          proc.burst = 1; el.value = 1;
+          window.SCHED.toast.show(proc.pid + ': el burst mínimo es 1 tick.', 'warn');
+        } else if (val > 200) {
+          window.SCHED.toast.show(proc.pid + ': burst muy alto (' + val + ' ticks). ¿Es correcto?', 'warn');
+        }
+      }
+      if (el.dataset.field === 'mem') {
+        var cfg = getConfig();
+        if (val > cfg.memory) {
+          window.SCHED.toast.show(proc.pid + ': memoria (' + val + ' KB) excede el total configurado (' + cfg.memory + ' KB).', 'warn');
+        }
+      }
+      resetProcStatusPanel();
     });
 
     tbody.addEventListener('click', function (e) {
@@ -106,6 +124,8 @@
       processes = processes.filter(function (p) { return p.pid !== pid; });
       renderProcTable();
     });
+
+    resetProcStatusPanel();
   }
 
   function addProcess() {
@@ -264,17 +284,26 @@
     var colorMap = {};
     processes.forEach(function (p, i) { colorMap[p.pid] = COLORS[i % COLORS.length]; });
 
-    var runningSlots = (tick.cores || []).filter(function (s) { return s !== null; });
-    if (runningSlots.length === 0) {
-      rEl.innerHTML = '<span style="font-size:10px;color:var(--green-dk);letter-spacing:1px">IDLE</span>';
-    } else {
-      rEl.innerHTML = runningSlots.map(function (s) {
-        var c = s.color || colorMap[s.pid] || '#00ff41';
-        return '<div style="padding:3px 10px;border:1px solid ' + c + ';background:' + c +
-          ';color:#000;font-size:10px;letter-spacing:1px">' + s.pid +
-          ' <span style="font-size:8px">rem:' + s.remaining + '</span></div>';
-      }).join('');
+    // Core cards
+    var cfg      = getConfig();
+    var coreArr  = tick.cores || [];
+    var cardsHtml = '<div class="core-cards">';
+    for (var i = 0; i < cfg.cores; i++) {
+      var slot = coreArr[i];
+      var isActive = slot !== null && slot !== undefined;
+      var c = isActive ? (slot.color || colorMap[slot.pid] || '#00ff41') : null;
+      cardsHtml +=
+        '<div class="core-card' + (isActive ? ' core-active' : '') + '"' +
+          (isActive ? ' style="border-color:' + c + ';box-shadow:0 0 6px ' + c + '44"' : '') + '>' +
+          '<div class="core-card-hdr">CORE ' + i + '</div>' +
+          '<div class="core-card-pid"' + (isActive ? ' style="color:' + c + '"' : '') + '>' +
+            (isActive ? slot.pid : 'IDLE') +
+          '</div>' +
+          (isActive ? '<div class="core-card-rem">rem: ' + slot.remaining + ' tk</div>' : '') +
+        '</div>';
     }
+    cardsHtml += '</div>';
+    rEl.innerHTML = cardsHtml;
 
     var queue = tick.queue || [];
     if (queue.length === 0) {
@@ -287,14 +316,23 @@
           ' <span style="font-size:8px">rem:' + s.remaining + '</span></div>';
       }).join('');
     }
+
+    updateProcStatusPanel(tick);
   }
 
   function resetQueueDisplay() {
     var qEl = document.getElementById('queue-display');
     var rEl = document.getElementById('running-display');
-    var dash = '<span style="font-size:10px;color:var(--green-dk)">—</span>';
-    if (qEl) qEl.innerHTML = dash;
-    if (rEl) rEl.innerHTML = dash;
+    var cfg = getConfig();
+    if (rEl) {
+      var html = '<div class="core-cards">';
+      for (var i = 0; i < cfg.cores; i++) {
+        html += '<div class="core-card"><div class="core-card-hdr">CORE ' + i + '</div><div class="core-card-pid">IDLE</div></div>';
+      }
+      html += '</div>';
+      rEl.innerHTML = html;
+    }
+    if (qEl) qEl.innerHTML = '<span style="font-size:10px;color:var(--green-dk)">—</span>';
   }
 
   function updateStateDiagram(tick, isDone) {
@@ -309,9 +347,112 @@
     });
   }
 
+  // ── Validación de inputs ───────────────────────────────────────────────
+  function validateBeforeRun() {
+    var cfg = getConfig();
+    var ok = true;
+    processes.forEach(function (p) {
+      if ((p.burst || 0) < 1) {
+        window.SCHED.toast.show(p.pid + ': burst debe ser al menos 1 tick.', 'error');
+        ok = false;
+      }
+      if ((p.mem || 0) > cfg.memory) {
+        window.SCHED.toast.show(p.pid + ': memoria (' + p.mem + ' KB) excede el total configurado (' + cfg.memory + ' KB).', 'warn');
+      }
+    });
+    return ok;
+  }
+
+  // ── Panel de estado de procesos ────────────────────────────────────────
+  function updateProcStatusPanel(tick) {
+    var wrap = document.getElementById('proc-status-wrap');
+    if (!wrap || !tick) return;
+
+    var running = {};
+    (tick.cores || []).forEach(function (c, idx) {
+      if (c) running[c.pid] = { idx: idx, remaining: c.remaining };
+    });
+    var inQueue = {};
+    (tick.queue || []).forEach(function (q) {
+      inQueue[q.pid] = { remaining: q.remaining };
+    });
+
+    var html = '';
+    processes.forEach(function (p, i) {
+      var color = COLORS[i % COLORS.length];
+      var runInfo = running[p.pid];
+      var qInfo = inQueue[p.pid];
+      var isRunning = !!runInfo;
+      var isReady = !isRunning && !!qInfo;
+      var isIdle = !isRunning && !isReady && tick.tick < p.arrival;
+      var isDone = !isRunning && !isReady && !isIdle;
+
+      var rem;
+      if (isRunning)      rem = runInfo.remaining;
+      else if (isReady)   rem = qInfo.remaining;
+      else if (isIdle)    rem = p.burst;
+      else                rem = 0;
+
+      var stateLabel, stateCls, stateStyle = '';
+      if (isIdle) {
+        stateLabel = 'IDLE (arr=' + p.arrival + ')';
+        stateCls   = 'pstate-idle';
+      } else if (isRunning) {
+        stateLabel = 'RUNNING ◆ CORE ' + runInfo.idx;
+        stateCls   = 'pstate-running';
+        stateStyle = 'style="color:' + color + ';border-color:' + color + '"';
+      } else if (isReady) {
+        stateLabel = 'READY';
+        stateCls   = 'pstate-ready';
+      } else {
+        stateLabel = 'DONE ✓';
+        stateCls   = 'pstate-done';
+      }
+
+      var used = p.burst - rem;
+      var pct  = p.burst > 0 ? Math.min(100, Math.max(0, (used / p.burst) * 100)).toFixed(1) : 0;
+      var barColor = isDone ? 'var(--green-dim)' : color;
+
+      html +=
+        '<div class="proc-status-row">' +
+          '<span class="pid-chip" style="color:' + color + ';border-color:' + color + '">' + p.pid + '</span>' +
+          '<span class="pstate-badge ' + stateCls + '" ' + stateStyle + '>' + stateLabel + '</span>' +
+          '<div class="burst-progress"><div class="burst-bar" style="width:' + pct + '%;background:' + barColor + '"></div></div>' +
+          '<span class="burst-rem">' + rem + '&thinsp;/&thinsp;' + p.burst + ' tk</span>' +
+        '</div>';
+    });
+
+    wrap.innerHTML = html || '<div class="placeholder">Sin procesos.</div>';
+  }
+
+  function resetProcStatusPanel() {
+    var wrap = document.getElementById('proc-status-wrap');
+    if (!wrap) return;
+    if (processes.length === 0) {
+      wrap.innerHTML = '<div class="placeholder">Agrega procesos y ejecuta la simulación.</div>';
+      return;
+    }
+    var html = '';
+    processes.forEach(function (p, i) {
+      var color = COLORS[i % COLORS.length];
+      html +=
+        '<div class="proc-status-row">' +
+          '<span class="pid-chip" style="color:' + color + ';border-color:' + color + '">' + p.pid + '</span>' +
+          '<span class="pstate-badge pstate-idle">IDLE (arr=' + p.arrival + ')</span>' +
+          '<div class="burst-progress"><div class="burst-bar" style="width:0%"></div></div>' +
+          '<span class="burst-rem">' + p.burst + '&thinsp;/&thinsp;' + p.burst + ' tk</span>' +
+        '</div>';
+    });
+    wrap.innerHTML = html;
+  }
+
   // ── Simulation Control ─────────────────────────────────────────────────
   function runSimulation(callback) {
-    if (processes.length === 0) { alert('Agrega al menos un proceso.'); return; }
+    if (processes.length === 0) {
+      window.SCHED.toast.show('Agrega al menos un proceso antes de simular.', 'error');
+      return;
+    }
+    if (!validateBeforeRun()) return;
     var cfg = getConfig();
 
     // Sync inputs before running
@@ -467,6 +608,7 @@
     document.getElementById('tick-val').textContent = '0';
     updateCoreLeds();
     resetQueueDisplay();
+    resetProcStatusPanel();
     document.querySelectorAll('.state-node').forEach(function (n) { n.classList.remove('active'); });
     document.getElementById('results-wrap').innerHTML =
       '<div class="results-header">PROCESS METRICS TABLE</div>' +
@@ -483,6 +625,23 @@
     // Final state: show TERMINATED and empty queue/running
     var lastTick = simResult.ticks[simResult.ticks.length - 1];
     if (lastTick) updateStateDiagram(lastTick, true);
+
+    // Mark all processes as DONE in the status panel
+    var wrap = document.getElementById('proc-status-wrap');
+    if (wrap && processes.length > 0) {
+      var doneHtml = '';
+      processes.forEach(function (p, i) {
+        var color = COLORS[i % COLORS.length];
+        doneHtml +=
+          '<div class="proc-status-row">' +
+            '<span class="pid-chip" style="color:' + color + ';border-color:' + color + '">' + p.pid + '</span>' +
+            '<span class="pstate-badge pstate-done">DONE ✓</span>' +
+            '<div class="burst-progress"><div class="burst-bar" style="width:100%;background:var(--green-dim)"></div></div>' +
+            '<span class="burst-rem">0&thinsp;/&thinsp;' + p.burst + ' tk</span>' +
+          '</div>';
+      });
+      wrap.innerHTML = doneHtml;
+    }
 
     var metrics = simResult.metrics;
     var summary = simResult.summary;
@@ -660,7 +819,7 @@
     window.SCHED.fileIO.openFilePicker('.txt,.csv', function (text) {
       var imported = window.SCHED.fileIO.parseProcCSV(text);
       if (!imported || imported.length === 0) {
-        alert('No se pudo leer el archivo. Verifica el formato:\nPID,Arrival,Burst,Priority,Mem');
+        window.SCHED.toast.show('No se pudo leer el archivo. Formato esperado: PID,Arrival,Burst,Priority,Mem', 'error');
         return;
       }
       processes  = imported;
@@ -680,7 +839,8 @@
 
   function exportResults() {
     if (!simResult || !simResult.metrics || simResult.metrics.length === 0) {
-      alert('Ejecuta una simulación primero.'); return;
+      window.SCHED.toast.show('Ejecuta una simulación primero para exportar resultados.', 'warn');
+      return;
     }
     var headers = ['PID', 'Arrival', 'Burst', 'Completion', 'TAT', 'WaitTime', 'ResponseTime'];
     var rows    = simResult.metrics.map(function (m) {
@@ -697,7 +857,10 @@
 
   // ── Comparación de Algoritmos ──────────────────────────────────────────
   function runComparison() {
-    if (processes.length === 0) { alert('Agrega al menos un proceso.'); return; }
+    if (processes.length === 0) {
+      window.SCHED.toast.show('Agrega al menos un proceso para comparar algoritmos.', 'error');
+      return;
+    }
 
     var panel   = document.getElementById('compare-panel');
     var content = document.getElementById('compare-content');
